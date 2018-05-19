@@ -2202,7 +2202,7 @@ spline ps = ps
 -- spline0 b ps uses ps as control points for constructing a closed (b = True) 
 -- resp. open (b = False) B-spline with degree 3; see Paul Burke, Spline Curves
 -- (http://astronomy.swin.edu.au/~pbourke/curves/spline)
--- or Heinrich MŸller, B-Spline-Technik, Vorlesung Geometrisches Modellieren 
+-- or Heinrich MÃ¼ller, B-Spline-Technik, Vorlesung Geometrisches Modellieren 
 -- (http://ls7-www.cs.tu-dortmund.de).
 
 spline0 :: Bool -> Path -> Path

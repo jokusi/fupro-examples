@@ -1336,7 +1336,7 @@ graph6 = [(1,11,2),(2,11,3),(3,11,1),(3,11,4),(3,11,5),(4,11,5),(4,11,6)]
 
 -- KNUTH-MORRIS-PRATT ALGORITHM
 
--- siehe: Uwe Schöning, Algorithmen - kurz gefasst, $ 8.3, oder
+-- siehe: Uwe Sch√∂ning, Algorithmen - kurz gefasst, $ 8.3, oder
 --        http://www.informatik.uni-leipzig.de/lehre/Heyer0001/AD2-Vorl9
 
 -- kmp pat text schreibt * unter das erste Zeichen jedes Vorkommens von pat in
@@ -2258,9 +2258,9 @@ eqHolds [o,r,n,y,e,d] = (e+o)*100+(n+r)*10+d+e == o*1000+n*100+e*10+y
 -- ZEBRA PROBLEM 
 
 {- https://en.wikipedia.org/wiki/Zebra_Puzzle
--- https://de.wikipedia.org/wiki/Zebrarätsel
+-- https://de.wikipedia.org/wiki/Zebrar√§tsel
 -- https://de.wikibooks.org/wiki/Algorithmensammlung:_Spezielle_Probleme:_Das_
--- Zebrarätsel
+-- Zebrar√§tsel
 -- https://www.logisch-gedacht.de/logikraetsel/einsteinraetsel/loesung
 
  1. The Englishman lives in the red house.					
