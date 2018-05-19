@@ -13,14 +13,14 @@ module Movie where
  type Pos = (Int,Int)
  
  mkFile dir i | i < 10  = dir ++ "/00" ++ file
-	      | i < 100 = dir ++ "/0"  ++ file
-	      | True    = dir ++ '/'   :  file
-	      		  where file = show i ++ ".svg"
+              | i < 100 = dir ++ "/0"  ++ file
+              | True    = dir ++ '/'   :  file
+                          where file = show i ++ ".svg"
 
  isPic :: String -> Bool
  isPic file = lg > 4 && 
               drop (lg-4) file `elem` words ".eps .gif .jpg .pdf .png .svg"
-	      where lg = length file
+              where lg = length file
 
  movie :: String -> Bool -> IO ()
  movie dir frame = do files <- getDirectoryContents dir
@@ -29,7 +29,7 @@ module Movie where
  movies :: String -> Bool -> [String] -> [Pos] -> IO ()
  movies file frame dirs ps = do files <- mapM getDirectoryContents dirs
                                 let picFiles i = filter isPic $ files!!i
-			            getFile (i,j) = dirs!!i++'/':picFiles i!!j
+                                    getFile (i,j) = dirs!!i++'/':picFiles i!!j
                                 html frame file $ map getFile ps
 
  movieSelect dir = movies dir False [dir] . map (\i -> (0,i))
@@ -57,9 +57,9 @@ module Movie where
     ">\n</body>\n</html>"
   where n = length files
         f file = ",\"" ++ file ++ "\""
-	(open,width,height,close) = 
-	 if frame then ("iframe","2400","900"," frameborder"&"0"++">\n</iframe")
-		  else ("img","600","600",">\n</img")
+        (open,width,height,close) = 
+         if frame then ("iframe","2400","900"," frameborder"&"0"++">\n</iframe")
+                  else ("img","600","600",">\n</img")
  html _ _ _ = return ()
  
  mkPdf file = system $ "pstopdf " ++ file
@@ -67,18 +67,18 @@ module Movie where
  mkPng :: String -> String -> IO ()
  mkPng dir file = do rawSystem "convert" [file',"-trim",new]
                      removeFile file'
-		  where file' = dir ++ '/':file
-		        new = take (length file'-4) file' ++ ".png"
+                  where file' = dir ++ '/':file
+                        new = take (length file'-4) file' ++ ".png"
 
 -- mkPng works for eps files. For converting svg files to png use
--- https://cloudconvert.org/svg-to-png.				
+-- https://cloudconvert.org/svg-to-png.                         
 
  pngmovie :: String -> IO ()
  pngmovie dir = do files <- getDirectoryContents dir
-	           mapM_ (mkPng dir) $ filter isPic files
+                   mapM_ (mkPng dir) $ filter isPic files
                    files <- getDirectoryContents dir
-	           html True dir [dir++'/':file | file <- files, isPic file]
-	           
+                   html True dir [dir++'/':file | file <- files, isPic file]
+                   
  getFiles :: String -> IO ()
  getFiles dir = do files <- getDirectoryContents dir; mapM_ putStrLn files
 

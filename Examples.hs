@@ -28,8 +28,8 @@ import qualified Data.Map.Strict as DMS
 -- import System.IO
 
 import Painter (Tree(F,V),root,subtrees,mkTree,float,float2,RGB,red,hue,update,
-		insert,remove,diff,union,unionMap,subset,fold2,fixpt,
-		(***),(&&&),MonadTrans(lift))
+                insert,remove,diff,union,unionMap,subset,fold2,fixpt,
+                (***),(&&&),MonadTrans(lift))
 import Coalg (Bintree(Empty,Fork),Id(Id),StateT(StateT),runST,getSubtree)
 import Expr (Compiler,some,many,ListT(runLT))
 
@@ -38,9 +38,9 @@ import Expr (Compiler,some,many,ListT(runLT))
 (&) :: a -> (a -> b) -> b
 (&) = flip ($)
 
-xx = False && undefined			-- >  False
-yy = take 9 $ [1..9]++undefined		-- >  [1..9]
-zz = msum [Just 5,undefined]		-- >  Just 5
+xx = False && undefined                 -- >  False
+yy = take 9 $ [1..9]++undefined         -- >  [1..9]
+zz = msum [Just 5,undefined]            -- >  Just 5
 
 pow1 = ((+5)^^^6) 8
 
@@ -51,8 +51,8 @@ fact' = \case 0 -> 1; n | n > 0 -> n*fact'(n-1)
 
 maybeRepeat :: Int -> Maybe [Int] 
 maybeRepeat i = do rec s <- Just (i:s)
-		   Just s
-		   
+                   Just s
+                   
 s0 = take 22 s where Just s = maybeRepeat 5
 
 nonempty :: MonadPlus m => [a] -> m ()
@@ -62,19 +62,19 @@ foo :: Int -> Int
 foo k = k+(read $ unsafePerformIO $ readFile "testt")
 
 foo1 = \case Just a -> \case Nothing -> Nothing; Just b -> Just a
-	     _ -> \case Just a -> Nothing; _ -> Nothing
+             _ -> \case Just a -> Nothing; _ -> Nothing
 
 baltree :: [a] -> Bintree a
 baltree [] = Empty
 baltree s  = Fork a (baltree s1) (baltree s2)
-	     where (s1,a:s2) = splitAt (length s`div`2) s	 
+             where (s1,a:s2) = splitAt (length s`div`2) s        
 
 data Point = Point {x,y :: Float} deriving Eq
 
 data DRect = DRect {center :: Point, width,height :: Float, color :: RGB}
 
 instance Show Point where 
-	 show (Point x y) = '(':show x ++ ',':show y ++ ")"
+         show (Point x y) = '(':show x ++ ',':show y ++ ")"
 
 distance :: Point -> Point -> Float
 distance (Point x1 y1) (Point x2 y2) = sqrt $ (x2-x1)^2+(y2-y1)^2
@@ -93,10 +93,10 @@ access = rect&center&x
 -- O'Haskell templates as Haskell data types with references
 
 data Cell' = Cell' {getPoint :: IO Point,
-	            setPoint :: Point -> IO (),
-		    getNext :: IO (Maybe Cell'), 
-		    setNext :: Maybe Cell' -> IO (),
-		    getDist :: IO Float}
+                    setPoint :: Point -> IO (),
+                    getNext :: IO (Maybe Cell'), 
+                    setNext :: Maybe Cell' -> IO (),
+                    getDist :: IO Float}
 
 newCell :: Point -> Maybe Cell' -> IO Cell'
 newCell point next = do pointRef <- newIORef point
@@ -105,30 +105,30 @@ newCell point next = do pointRef <- newIORef point
                             setPoint = writeIORef pointRef
                             getNext = readIORef nextRef
                             setNext = writeIORef nextRef
-                            getDist = do pt <- getPoint			 -- (1)
-                            		 next <- getNext
-                         	         case next of 
-                         	              Nothing -> return 0
-                         	              Just (Cell' getPt _ _ _ _)
-                         	                -> do pt' <- getPt
-                         	                      return $ distance pt pt'
-                      	                         --   pt <- path&getPoint 
-                      	                         -- > type conflict with (1)				  
+                            getDist = do pt <- getPoint                  -- (1)
+                                         next <- getNext
+                                         case next of 
+                                              Nothing -> return 0
+                                              Just (Cell' getPt _ _ _ _)
+                                                -> do pt' <- getPt
+                                                      return $ distance pt pt'
+                                                 --   pt <- path&getPoint 
+                                                 -- > type conflict with (1)                              
                         return $ Cell' getPoint setPoint getNext setNext getDist
                      
 lengthCyclic' :: Cell' -> IO (Float,Bool)
 lengthCyclic' cell = do point <- cell&getPoint
                         next <- cell&getNext
- 		        dist <- cell&getDist
-  		        let loop :: Maybe Cell' -> IO (Float,Bool)
-  		            loop Nothing     = return (dist,False)
-  		            loop (Just cell) = do pt <- cell&getPoint
-				                  next <- cell&getNext
-				                  dist <- cell&getDist
-				                  if point == pt 
-				                  then return (dist,True)
-				                  else do (dist',b) <- loop next
-				           	          return (dist+dist',b)
+                        dist <- cell&getDist
+                        let loop :: Maybe Cell' -> IO (Float,Bool)
+                            loop Nothing     = return (dist,False)
+                            loop (Just cell) = do pt <- cell&getPoint
+                                                  next <- cell&getNext
+                                                  dist <- cell&getDist
+                                                  if point == pt 
+                                                  then return (dist,True)
+                                                  else do (dist',b) <- loop next
+                                                          return (dist+dist',b)
                         loop next
 
 data Cell = Cell {point :: Point, next :: Maybe (IORef Cell)}
@@ -137,63 +137,63 @@ lengthCyclic :: IORef Cell -> IO (Float,Bool)
 lengthCyclic ref = do 
          Cell pt0 next <- readIORef ref
          let loop :: Float -> Point -> Maybe (IORef Cell) -> IO (Float,Bool)
-  	     loop dist _ Nothing     = return (dist,False)
-  	     loop dist pt (Just ref) = do Cell pt' nx <- readIORef ref
-  		                          let dist' = dist+distance pt pt'
-  		                          if pt0 == pt' then return (dist',True)
-				                        else loop dist' pt' nx
+             loop dist _ Nothing     = return (dist,False)
+             loop dist pt (Just ref) = do Cell pt' nx <- readIORef ref
+                                          let dist' = dist+distance pt pt'
+                                          if pt0 == pt' then return (dist',True)
+                                                        else loop dist' pt' nx
          loop 0 pt0 next 
                      
 lengthCyclicL :: [Point] -> (Float,Bool)
 lengthCyclicL (pt0:s) = loop 0 pt0 s where
-		        loop :: Float -> Point -> [Point] -> (Float,Bool)
-		        loop dist _ []       = (dist,False)
-		        loop dist pt (pt':s) = if pt0 == pt' then (dist',True)
-  		                               else loop dist' pt' s
-  		                               where dist' = dist+distance pt pt'
+                        loop :: Float -> Point -> [Point] -> (Float,Bool)
+                        loop dist _ []       = (dist,False)
+                        loop dist pt (pt':s) = if pt0 == pt' then (dist',True)
+                                               else loop dist' pt' s
+                                               where dist' = dist+distance pt pt'
 
 outPathInfo :: [Point] -> IORef Cell -> IO ()
 outPathInfo path ref = do 
                 putStrLn $ "\npath = " ++ show (take 4 path) ++
-                	   "\nlengthCyclicL = " ++ show (lengthCyclicL path)
+                           "\nlengthCyclicL = " ++ show (lengthCyclicL path)
                 lgb <- lengthCyclic ref
- 	        putStrLn $ "lengthCyclic = " ++ show lgb
+                putStrLn $ "lengthCyclic = " ++ show lgb
  
 testPath :: IO ()
 testPath = do let path@[pt1,pt2,pt3] = [Point 77 6,Point 99 13,Point 111 43]
               rec ref1 <- newIORef $ Cell pt1 $ Just ref2
                   ref2 <- newIORef $ Cell pt2 $ Just ref3
                   ref3 <- newIORef $ Cell pt3 Nothing
-              outPathInfo path ref1 		-- (55.39778,False)
+              outPathInfo path ref1             -- (55.39778,False)
               
               cell2 <- readIORef ref2
               let pt = cell2&point
                   pt2 = pt {x = pt&x-55}
-	          path' = [pt1,pt2,pt3]
+                  path' = [pt1,pt2,pt3]
               writeIORef ref2 $ cell2 {point = pt2}
-              outPathInfo path' ref1 		-- (107.14406,False)
+              outPathInfo path' ref1            -- (107.14406,False)
               
               cell3 <- readIORef ref3
               writeIORef ref3 $ cell3 {next = Just ref1}
               let poly = path'++poly
-              outPathInfo poly ref1 		-- (157.39343,True)
+              outPathInfo poly ref1             -- (157.39343,True)
               
               {- old version:
               rec cell1 <- newCell pt1 $ Just cell2 
                   cell2 <- newCell pt2 $ Just cell3
                   cell3 <- newCell pt3 Nothing
-	      (lg,b) <- lengthCyclic cell1
-	      putStrLn $ "length = " ++ show lg ++ "\ncyclic = " ++ show b
-	      -- 			55.39778                    False
-	      pt <- cell2&getPoint
-	      (cell2&setPoint) $ pt {x = pt&x-55}
-	      (lg,b) <- lengthCyclic cell1
-	      putStrLn $ "length = " ++ show lg ++ "\ncyclic = " ++ show b
-	      --                        107.14406		    False
-	      (cell3&setNext) $ Just cell1
               (lg,b) <- lengthCyclic cell1
-	      putStrLn $ "length = " ++ show lg ++ "\ncyclic = " ++ show b
-	      			        157.39343		    True
+              putStrLn $ "length = " ++ show lg ++ "\ncyclic = " ++ show b
+              --                        55.39778                    False
+              pt <- cell2&getPoint
+              (cell2&setPoint) $ pt {x = pt&x-55}
+              (lg,b) <- lengthCyclic cell1
+              putStrLn $ "length = " ++ show lg ++ "\ncyclic = " ++ show b
+              --                        107.14406                   False
+              (cell3&setNext) $ Just cell1
+              (lg,b) <- lengthCyclic cell1
+              putStrLn $ "length = " ++ show lg ++ "\ncyclic = " ++ show b
+                                        157.39343                   True
               O'Haskell version: 
               fldit-www.cs.uni-dortmund.de/~peter/Haskellprogs/Pointer.hs -}
 
@@ -211,7 +211,7 @@ type Boolfun a  = a -> a -> Bool
 
 sort :: Boolfun a -> [a] -> [a]
 sort rel (x:s) = sort rel [y | y <- s, rel y x] ++ x:
-		 sort rel [y | y <- s, not $ rel x y]
+                 sort rel [y | y <- s, not $ rel x y]
 sort _ s = s
 
 -- searchAll f s searches all elements of s satisfying f and returns their
@@ -219,8 +219,8 @@ sort _ s = s
 
 searchAll :: (a -> Bool) -> [a] -> [Int]
 searchAll f s = snd $ foldr g (length s-1,[]) s
-	        where g x (i,is) = (i-1,if f x then i:is else is)
-			     
+                where g x (i,is) = (i-1,if f x then i:is else is)
+                             
 updList :: [a] -> Int -> a -> [a]
 updList s i a = take i s++a:drop (i+1) s
 
@@ -233,17 +233,17 @@ horner :: [Float] -> Float -> Float
 horner bs x = foldl1 f bs where f a b = a*x+b
 nats n = cons n $ nats $ n+1
 
-revAcc :: [a] -> [a]				-- reversed list
+revAcc :: [a] -> [a]                            -- reversed list
 revAcc = loop [] where loop s (a:s') = loop (a:s) s'
-	               loop s _      = s
+                       loop s _      = s
 
 -- removeSub s s' removes all occurrences of the sublist s' from the list s.
 
 removeSub s s' = f False s s' [] []
            where f _ (x:s) (y:s1) s2 s3 | x == y = f True s s1 (s2++[x]) s3
-					| True   = f False s s' [] (s3++s2++[x])
-		 f _ s@(_:_) [] _ s3             = f False s s' [] s3
-		 f _ _ _ s2 s3     		 = s3++s2 
+                                        | True   = f False s s' [] (s3++s2++[x])
+                 f _ s@(_:_) [] _ s3             = f False s s' [] s3
+                 f _ _ _ s2 s3                   = s3++s2 
 
 f^^^n = (!!n) . iterate f 
 
@@ -254,49 +254,49 @@ blink = cons 0 $ cons 1 blink
 
 -- list zipper
 
-type ListIndex a  = ([a],Int) 			
-type ListZipper a = ([a],[a]) 	        -- (reversed context, referenced suffix)
+type ListIndex a  = ([a],Int)                   
+type ListZipper a = ([a],[a])           -- (reversed context, referenced suffix)
 
 indexToZipper :: ListIndex a -> ListZipper a
 indexToZipper = loop [] where loop :: [a] -> ([a],Int) -> ([a],[a])
-			      loop c (s,0)   = (c,s)
+                              loop c (s,0)   = (c,s)
                               loop c (a:s,n) = loop (a:c) (s,n-1)
 
 zipperToIndex :: ListZipper a -> ListIndex a
 zipperToIndex (c,s) = loop c (s,0) 
                       where loop :: [a] -> ([a],Int) -> ([a],Int)
-		            loop (a:c) (s,n) = loop c (a:s,n+1)
+                            loop (a:c) (s,n) = loop c (a:s,n+1)
                             loop _ sn        = sn
-			  
+                          
 -- s /= [] /\ 0 <= n < length s ==> zipperToIndex $ indexToZipper (s,n) = (s,n)
 -- s /= []                      ==> indexToZipper $ zipperToIndex (c,s) = (c,s)
 
 back,forth :: ListZipper a -> ListZipper a
 back (a:c,s)  = (c,a:s)
 forth (c,a:s) = (a:c,s)
-	     		  
+                          
 -- NONEMPTY BINARY TREES
 
 data BintreeL a = Leaf a | Bin a (BintreeL a) (BintreeL a)
 
--- reads "5(7(3, 8),6 ) " :: [(BintreeL Int,String)]	
-			     -- > [(5,"(7(3, 8),6 ) "),(5(7(3,8),6)," ")]
--- read "5(7(3, 8),6 ) "  :: BintreeL Int	   
-			     -- > 5(7(3,8),6)
--- reads "5(7(3,8),6)hh"  :: [(BintreeL Int,String)]	
-			     -- > [(5,"(7(3,8),6)hh"),(5(7(3,8),6),"hh")]
--- read "5(7(3,8),6)hh"   :: BintreeL Int	   
-			     -- > Exception: ...: no parse			     
+-- reads "5(7(3, 8),6 ) " :: [(BintreeL Int,String)]    
+                             -- > [(5,"(7(3, 8),6 ) "),(5(7(3,8),6)," ")]
+-- read "5(7(3, 8),6 ) "  :: BintreeL Int          
+                             -- > 5(7(3,8),6)
+-- reads "5(7(3,8),6)hh"  :: [(BintreeL Int,String)]    
+                             -- > [(5,"(7(3,8),6)hh"),(5(7(3,8),6),"hh")]
+-- read "5(7(3,8),6)hh"   :: BintreeL Int          
+                             -- > Exception: ...: no parse                           
 
 -- binary-tree zipper (see http://www.haskell.org/haskellwiki/Zipper)
 
 type TreeNode a = (BintreeL a,[Int])
 
 data Context a = Top | L a (Context a) (BintreeL a) 
-		     | R a (BintreeL a) (Context a) 
-			
-type TreeZipper a = (Context a,BintreeL a)   		-- (reversed context, 
-					     		--  referenced subtree)
+                     | R a (BintreeL a) (Context a) 
+                        
+type TreeZipper a = (Context a,BintreeL a)              -- (reversed context, 
+                                                        --  referenced subtree)
 
 treeToZipper :: TreeNode a -> TreeZipper a
 treeToZipper (t,node) = loop Top t node
@@ -319,7 +319,7 @@ sibling (L a c u,t) = (R a t c,u)
 sibling (R a t c,u) = (L a c u,t)
 left  (c,Bin a t u) = (L a c u,t)
 right (c,Bin a t u) = (R a t c,u)
-			  
+                          
 getSub :: TreeNode a -> BintreeL a
 getSub (Bin a t u,0:node) = getSub (t,node)
 getSub (Bin a t u,1:node) = getSub (u,node)
@@ -327,51 +327,51 @@ getSub (t,[])             = t
 
 -- getSub tnode defined ==> zipperToTree $ treeToZipper tnode = tnode
 -- treeToZipper . zipperToTree = id
-			  
+                          
 getSub' :: String -> String -> TreeZipper Int
 getSub' tree node = treeToZipper (read tree,map readChar node)
-		    where readChar c = if c == '0' then 0 else 1
+                    where readChar c = if c == '0' then 0 else 1
 
 tn1 = getSub' "1(2(3(4,5),6(7,8)),9(10(11,12),13(14,15)))" "010"
-tn2 = fst $ zipperToTree tn1	-- > 1(2(3(4,5),6(7,8)),9(10(11,12),13(14,15)))
-tn3 = snd tn1			-- > 7
-tn4 = snd $ sibling tn1		-- > 8
-tn5 = snd $ up tn1		-- > 6(7,8)
-tn6 = snd $ right $ up $ tn1	-- > 8
-			  
+tn2 = fst $ zipperToTree tn1    -- > 1(2(3(4,5),6(7,8)),9(10(11,12),13(14,15)))
+tn3 = snd tn1                   -- > 7
+tn4 = snd $ sibling tn1         -- > 8
+tn5 = snd $ up tn1              -- > 6(7,8)
+tn6 = snd $ right $ up $ tn1    -- > 8
+                          
 putSub :: TreeNode a -> BintreeL a -> BintreeL a
 putSub (Bin a t u,0:node) v = Bin a (putSub (t,node) v) u
 putSub (Bin a t u,1:node) v = Bin a t (putSub (u,node) v)
 putSub (_,[]) v             = v
 
 instance Show a => Show (BintreeL a) where
-	           showsPrec _ (Leaf a) 	  = shows a
-	           showsPrec _ (Bin a left right) = shows a . ('(':) . 
-	  			          	    shows left . (',':) .
-					            shows right . (')':)
+                   showsPrec _ (Leaf a)           = shows a
+                   showsPrec _ (Bin a left right) = shows a . ('(':) . 
+                                                    shows left . (',':) .
+                                                    shows right . (')':)
 
 instance Read a => Read (BintreeL a) where
                    readsPrec _ s = [(Leaf a,s) | (a,s) <- reads s] ++
-	                           [(Bin a left right,s) | (a,s) <- reads s,   
+                                   [(Bin a left right,s) | (a,s) <- reads s,   
                                                            ("(",s) <- lex s,
-						           (left,s) <- reads s,
-						           (",",s) <- lex s,
-							   (right,s) <- reads s,
-							   (")",s) <- lex s]
-		
+                                                           (left,s) <- reads s,
+                                                           (",",s) <- lex s,
+                                                           (right,s) <- reads s,
+                                                           (")",s) <- lex s]
+                
 bintree :: Compiler a -> Compiler (BintreeL a)
 bintree comp = do a <- comp
                   msum [do tchar '('; left <- bintree comp
                            tchar ','; right <- bintree comp
                            tchar ')'; return $ Bin a left right,
                         return $ Leaf a]
-		     
+                     
 compileB = runST $ bintree int
 
 data Test = (:+++) Int Bool Int
 
 (+++) x y z = x+y+z
-			    
+                            
 fs1 = [(+1),(*2),(+11),(*111)]
 f1 = map ($5) fs1
 f2 = zipWith ($) fs1 [1,11,22,33] 
@@ -391,7 +391,7 @@ tt = (mapS [(+1),(*3)]!!1)[5,6,7]
 
 foldls :: (b -> a -> b) -> b -> [a] -> b 
 foldls f b (x:xs) = flip (foldls f) xs $! f b x
-	            -- let y = f b x in seq y (foldls f y xs ) 
+                    -- let y = f b x in seq y (foldls f y xs ) 
 foldls f b _      = b
 
 fol = foldls (+) 0 [1..10^7]
@@ -411,19 +411,19 @@ checksum :: Integer -> Integer
 checksum = sum . map (read . \x -> [x]) . show
 
 liste = [g b | a <- s, let b = f a, p b] where s = [1..10]
-	      				       f = (*2)
-					       p = (< 10)
-					       g = (`div` 2)
+                                               f = (*2)
+                                               p = (< 10)
+                                               g = (`div` 2)
 
 ljapunow period = log $ take 400 (foldl f [0] (take 500 (cycle period)))/400
-		  where f s@(x:_) a = g' a x:s
-			g a x = a*x*(1-x)
-			g' a x = a-2*a*x
-			
+                  where f s@(x:_) a = g' a x:s
+                        g a x = a*x*(1-x)
+                        g' a x = a-2*a*x
+                        
 -- DEPENDENT TYPES
 
 data Rose f a = Rose a (f (Rose f a))
-		  
+                  
 data Dynamic = forall a.(Read a,Show a) => Dyn a
 
 instance Show Dynamic where show (Dyn a) = show a
@@ -447,12 +447,12 @@ data Z
 data S n
 
 data List a n where Nil  :: List a Z
-     	            (:-) :: a -> List a n -> List a (S n)
-     	            
+                    (:-) :: a -> List a n -> List a (S n)
+                    
 type List3 = List Int (S (S (S Z)))
 
 list3 = 6 :- (7 :- (8 :- Nil)) :: List3
-	    
+            
 -- BINARY MAP
 
 class Functor2 f where map2 :: (a -> b) -> (c -> d) -> f a c -> f b d
@@ -483,22 +483,22 @@ mkArray bds f = array bds [(x,f x) | x <- range bds]
 fib :: Array Int Integer
 fib = mkArray (0,1000000) f where f 0 = 1
                                   f 1 = 1 
-				  f n = fib!(n-1) + fib!(n-2) 
-			      
+                                  f n = fib!(n-1) + fib!(n-2) 
+                              
 fi 0 = 1
 fi 1 = 1 
 fi n = fi (n-1) + fi (n-2) 
 
 insertChar :: a -> [a] -> [Int] -> [a]
 insertChar x = foldl f where f xs i = take i xs++x:drop i xs 
-				       
+                                       
 -- TREES
   
 showTree :: Show a => Tree a -> ShowS
 showTree (V a)        = shows a
 showTree (F a [])     = shows a 
 showTree (F a (t:ts)) = shows a . ('(':) . showTree t . foldl h id ts . (')':)
-		        where h g t = g . (',':) . showTree t
+                        where h g t = g . (',':) . showTree t
 
 size :: Tree a -> Int
 size (F _ ts) = sum (map size ts)+1
@@ -518,7 +518,7 @@ path t node = map (root . getSubtree t . flip take node) [0..length node]
 putSubtree :: Tree a -> Node -> Tree a -> Tree a
 putSubtree t [] u = u
 putSubtree (F a ts) (i:node) u | i < length ts = F a $ updList ts i 
-					             $ putSubtree (ts!!i) node u
+                                                     $ putSubtree (ts!!i) node u
 putSubtree _ _ _ = error "putSubtree"
 
 t00 = putSubtree t0 [0,0,1] $ getSubtree t0 [1]
@@ -529,7 +529,7 @@ putSubtreeHO (V a) [0] u = F a [u]
 putSubtreeHO (F a ts) (i:node) u 
        | i < lg               = F a $ updList ts i $ putSubtreeHO (ts!!i) node u
        | i == lg && null node = F a $ ts++[u] 
-     			        where lg = length ts
+                                where lg = length ts
 putSubtreeHO _ _ _ = error "putSubtreeHO"
 
 (>>>) :: Tree a -> (a -> Tree a) -> Tree a
@@ -553,16 +553,16 @@ t1s = t1 >>> sub
 unify :: Eq a => Tree a -> Tree a -> Maybe (a -> Tree a)
 unify (V a) (V b)       = Just $ if a == b then V else update V a $ V b
 unify (V a) t           = do guard $ f t; Just $ update V a t
-			  where f (V b)    = a /= b
-			        f (F _ ts) = all f ts
+                          where f (V b)    = a /= b
+                                f (F _ ts) = all f ts
 unify t (V a)           = unify (V a) t
 unify (F f ts) (F g us) = do guard $ f == g && length ts == length us
-			     unifyall ts us
+                             unifyall ts us
 
 unifyall :: Eq a => [Tree a] -> [Tree a] -> Maybe (a -> Tree a)
 unifyall [] []         = Just V
 unifyall (t:ts) (u:us) = do sub <- unify t u
-			    let msub = map (>>> sub)
+                            let msub = map (>>> sub)
                             sub' <- unifyall (msub ts) $ msub us
                             Just $ (>>> sub') . sub
 
@@ -570,23 +570,23 @@ sub1 = unify (F "+" [F "-" [V "x", V "y"],V "z"])
              (F "+" [V "a",F "*" [V "b", V "c"]])
              
 ts1 = case sub1 of Just sub -> [sub "z", sub "a"]; _ -> []
-    		-- > [F "*" [V "b",V "c"], F "-" [V "x",V "y"]]
-    		
+                -- > [F "*" [V "b",V "c"], F "-" [V "x",V "y"]]
+                
 -- DEPTH- and BREADTHFIRST SEARCH
 
 class TreeC t where rootC :: t a -> a
-		    subtreesC :: t a -> [t a]
-		    
+                    subtreesC :: t a -> [t a]
+                    
 instance TreeC Tree where rootC = root
-			  subtreesC = subtrees
-		    
+                          subtreesC = subtrees
+                    
 instance TreeC Bintree where rootC (Fork a _ _) = a
-			     subtreesC (Fork _ left right) = [left,right]
-		    
+                             subtreesC (Fork _ left right) = [left,right]
+                    
 instance TreeC BintreeL where rootC (Leaf a) = a
-			      rootC (Bin a _ _) = a
-			      subtreesC (Leaf _) = []
-			      subtreesC (Bin _ left right) = [left,right]
+                              rootC (Bin a _ _) = a
+                              subtreesC (Leaf _) = []
+                              subtreesC (Bin _ left right) = [left,right]
 
 creturn :: MonadPlus m => (a -> Bool) -> a -> m a
 creturn f a = do guard $ f a; return a
@@ -596,24 +596,24 @@ depthfirst f t = msum $ creturn f (rootC t) : map (depthfirst f) (subtreesC t)
 breadthfirst f t = visit [t] where
                    visit [] = mzero
                    visit ts = msum $ map (creturn f . rootC) ts ++
-                   		     [visit $ ts >>= subtreesC]
+                                     [visit $ ts >>= subtreesC]
 
 t2 :: Tree Int
 t2 = F 1 [F 2 [F 2 [V 3 ,V (-1)],V (-2)],F 4 [V (-3),V 5]]
 
-s1 = depthfirst (< 0) t2 :: Maybe Int  	 -- >  Just (-1)
-s2 = depthfirst (< 0) t2 :: [Int]      	 -- >  [-1,-2,-3]
+s1 = depthfirst (< 0) t2 :: Maybe Int    -- >  Just (-1)
+s2 = depthfirst (< 0) t2 :: [Int]        -- >  [-1,-2,-3]
 s3 = breadthfirst (< 0) t2 :: Maybe Int  -- >  Just (-2)
 s4 = breadthfirst (< 0) t2 :: [Int]      -- >  [-2,-3,-1]
 
 bt :: BintreeL Int
 bt = read "5(4(3,8(9,3)),6(1,2))"
 
-s5 = depthfirst (> 5) bt :: Maybe Int	-- > Just 8        
-s6 = depthfirst (> 5) bt :: [Int]	-- > [8,9,6]        
-s7 = breadthfirst (> 5) bt :: Maybe Int	-- > Just 6  
-s8 = breadthfirst (> 5) bt :: [Int]	-- > [6,8,9]  
-	      		    
+s5 = depthfirst (> 5) bt :: Maybe Int   -- > Just 8        
+s6 = depthfirst (> 5) bt :: [Int]       -- > [8,9,6]        
+s7 = breadthfirst (> 5) bt :: Maybe Int -- > Just 6  
+s8 = breadthfirst (> 5) bt :: [Int]     -- > [6,8,9]  
+                            
 -- A GADT of expressions
   
 data Expr a where
@@ -621,8 +621,8 @@ data Expr a where
      Bool   :: Bool -> Expr Bool
      (:+)   :: Expr Int -> Expr Int -> Expr Int
      (:*)   :: Expr Int -> Expr Int -> Expr Int
-     (:<=)  :: Expr Int -> Expr Int -> Expr Bool	
-     (:/\)  :: Expr Bool -> Expr Bool -> Expr Bool	
+     (:<=)  :: Expr Int -> Expr Int -> Expr Bool        
+     (:/\)  :: Expr Bool -> Expr Bool -> Expr Bool      
      If     :: Expr Bool -> Expr a -> Expr a -> Expr a
      PairE  :: Expr a -> Expr b -> Expr (a,b)
      ListE  :: [Expr a] -> Expr [a]
@@ -643,23 +643,23 @@ eval (TreeE t)     = fmap eval t
 e1 = TreeE $ F (IntE 5 :+ IntE 6) [F (IntE 7 :+ IntE 8) []]
 
 tr1 = F 5 [F 6 [F 6 [],F 7 []],
-	   F 7 [F 6 [],F 7 [],F 8 []],
-	   F 8 [F 6 [],F 7 [F 6 [],F 7 [],F 8 []],F 8 []]]
-		      
+           F 7 [F 6 [],F 7 [],F 8 []],
+           F 8 [F 6 [],F 7 [F 6 [],F 7 [],F 8 []],F 8 []]]
+                      
 tr2 = fmap show tr1
-		
+                
 incTree :: Tree Int -> Tree Int
 incTree = fmap (+1)
 
 -- SPINES (see Hinze et al., SYB Reloaded)
 
 data Type a where Int     :: Type Int
-		  String  :: Type String
-		  Pair    :: Type a -> Type b -> Type (a,b)
-		  List    :: Type a -> Type [a]
-		  Tree    :: Type a -> Type (Tree a)
-		  Forest  :: Type a -> Type [Tree a]
-		  Bintree :: Type a -> Type (Bintree a)
+                  String  :: Type String
+                  Pair    :: Type a -> Type b -> Type (a,b)
+                  List    :: Type a -> Type [a]
+                  Tree    :: Type a -> Type (Tree a)
+                  Forest  :: Type a -> Type [Tree a]
+                  Bintree :: Type a -> Type (Bintree a)
 
 data Typed a = (:%) {obj :: a, typ :: Type a}
 
@@ -670,19 +670,19 @@ toSpine (n :% Int)        = Constr n
 toSpine (s :% String)     = Constr s
 toSpine (p :% Pair a b)   = Constr (,) :$ (x :% a) :$ (y :% b) where (x,y) = p
 toSpine (s :% List a)     = case s of [] -> Constr s
-				      x:s -> Constr (:) :$ (x :% a) 
-				     		        :$ (s :% List a)
+                                      x:s -> Constr (:) :$ (x :% a) 
+                                                        :$ (s :% List a)
 toSpine (t :% Tree a)     = Constr F :$ (x :% a) :$ (s :% Forest a)
-			    where F x s = t
+                            where F x s = t
 toSpine (ts :% Forest a)  = case ts of [] -> Constr ts
-				       t:ts -> Constr (:) :$ (t :% Tree a) 
-					                  :$ (ts :% Forest a)
+                                       t:ts -> Constr (:) :$ (t :% Tree a) 
+                                                          :$ (ts :% Forest a)
 toSpine (bt :% Bintree a) = case bt of 
-			    Empty -> Constr bt
-			    Fork x l r -> Constr Fork :$ (x :% a)
-						      :$ (l :% Bintree a)
-					              :$ (r :% Bintree a)
-					              
+                            Empty -> Constr bt
+                            Fork x l r -> Constr Fork :$ (x :% a)
+                                                      :$ (l :% Bintree a)
+                                                      :$ (r :% Bintree a)
+                                                      
 -- QUERIES
 
 type Query r = forall a.Typed a -> r         -- SYB: Data a => a -> r
@@ -707,23 +707,23 @@ leafQ _                  = 0
 inner :: Query Int
 inner (t :% Tree Int)    = case t of F n (_:_) -> n;        _ -> 0
 inner (t :% Tree String) = case t of F s (_:_) -> length s; _ -> 0
-inner _			 = 0
+inner _                  = 0
 
 listQ :: Query [Int]
 listQ (n :% Int)    = [n]
 listQ (s :% String) = [length s]
 listQ _             = []
 
-n1 = everything (+)  allQ  $ tr1 :% Tree Int 	-- > 102
-n2 = everything (+)  leafQ $ tr1 :% Tree Int	-- > 69
+n1 = everything (+)  allQ  $ tr1 :% Tree Int    -- > 102
+n2 = everything (+)  leafQ $ tr1 :% Tree Int    -- > 69
 n3 = everything (+)  inner $ tr1 :% Tree Int    -- > 33
 n4 = everything (+)  allQ  $ [tr1,tr1] :% List (Tree Int) -- > 204
 n5 = everything (++) listQ $ ([tr1,tr1],tr2) :% 
-			     Pair (List $ Tree Int) (Tree String)
+                             Pair (List $ Tree Int) (Tree String)
      -- > [5,6,6,7,7,6,7,8,8,6,7,6,7,8,8,
      --    5,6,6,7,7,6,7,8,8,6,7,6,7,8,8,
      --    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-			     
+                             
 -- TRAVERSALS
 
 type Traversal = forall a.Typed a -> a       -- SYB: Data a => a -> a
@@ -742,7 +742,7 @@ everywhereTD t x = fromSpine $ mapT (everywhereTD t) $ toSpine $ t x :% typ x
 
 doubleE :: Traversal
 doubleE (t :% Tree Int) = case t of F n (t:_) | n == 7 -> F 1 [t]
-				    _ -> t
+                                    _ -> t
 doubleE (n :% Int)    = n+n
 doubleE (s :% String) = s++s
 doubleE (x :% _)      = x
@@ -757,28 +757,28 @@ data BST a b = BST {rbst :: a, fork :: Either b (BST a b,BST a b)}
 
 divTree :: Int -> Int -> BST Bool Int
 divTree n x = BST {rbst = divides n x, 
-		   fork = if divides n $ 2*x then Left n
-		   	  else Right (divTree (n-1) x,divTree (n+1) x)}
+                   fork = if divides n $ 2*x then Left n
+                          else Right (divTree (n-1) x,divTree (n+1) x)}
 
 divides n x = n /= 0 && x`mod`n == 0
 
 -- interior p poly returns True iff p is located within poly.
-			
+                        
 interior :: (Float,Float) -> [(Float,Float)] -> Bool
 interior p@(x,y) ps = pr3 $ foldl f (0,length ps-2,False) $ init ps
                where f (i,j,b) (x,y) = if yi < y && y <= yj || yj < y && y <= yi
-		 		       then if xi+(y-yi)/(yj-yi)*(xj-xi) < x 
-				   	    then (i+1,i,not b) else (i+1,i,b)
-			               else (i+1,j,b)
-		 	               where (xi,yi) = ps!!i; (xj,yj) = ps!!j
-		     pr3 (_,_,b) = b
+                                       then if xi+(y-yi)/(yj-yi)*(xj-xi) < x 
+                                            then (i+1,i,not b) else (i+1,i,b)
+                                       else (i+1,j,b)
+                                       where (xi,yi) = ps!!i; (xj,yj) = ps!!j
+                     pr3 (_,_,b) = b
 
 cloop :: IO ()
 cloop = do putStrLn "Enter an integer x!"
-	   str <- getLine
-	   let x = read str
-	   if x < 5 then putStrLn "x < 5"
-	            else do putStrLn $ "x = "++show x; cloop
+           str <- getLine
+           let x = read str
+           if x < 5 then putStrLn "x < 5"
+                    else do putStrLn $ "x = "++show x; cloop
 
 type Pos = (Int,Int)
  
@@ -788,25 +788,25 @@ type Pos = (Int,Int)
 getReps :: [a] -> [Pos] -> [[a]]
 getReps as pairs = [[as!!i | i <- is] | is <- iss]
                    where iss = maxima length $ union [] 
-	       				     $ foldl g [indices as] pairs
-		         g iss (i,j) = do is <- iss; [remove i is,remove j is]
+                                             $ foldl g [indices as] pairs
+                         g iss (i,j) = do is <- iss; [remove i is,remove j is]
 
 aaa = getReps [1..3] [(0,1),(1,2)]
 bbb = getReps [1..3] [(0,1),(0,2),(1,2)]
 
 sorted (x:s@(y:_)) = x <= y && sorted s
 sorted _           = True
-	  
+          
 mergesort,mergesort2 :: Ord a => [a] -> [a]
 
 mergesort (x:y:s) = merge (mergesort $ x:s1) (mergesort $ y:s2)
                     where (s1,s2) = split s
-mergesort s       = s	 
+mergesort s       = s    
 
 mergesort2 s | n < 2 = s
              | True  = merge (mergesort2 s1) (mergesort2 s2)
                        where n = length s
-		             (s1,s2) = splitAt (n `div` 2) s
+                             (s1,s2) = splitAt (n `div` 2) s
    
 split :: [a] -> ([a],[a])
 split (x:y:s) = (x:s1,y:s2) where (s1,s2) = split s
@@ -814,20 +814,20 @@ split s       = (s,[])
 
 split2 :: (a -> Bool) -> (a -> Bool) -> [a] -> Maybe ([a],[a])
 split2 f g (x:s) = do (s1,s2) <- split2 f g s
- 		      if f x then Just (x:s1,s2) 
-		       	     else do guard $ g x; Just (s1,x:s2) 
+                      if f x then Just (x:s1,s2) 
+                             else do guard $ g x; Just (s1,x:s2) 
 split2 _ _ _     = Just ([],[])
           
 merge :: Ord a => [a] -> [a] -> [a]
 merge s1@(x:s2) s3@(y:s4) = if x <= y then x:merge s2 s3 else y:merge s1 s4
 merge [] s                = s
-merge s _  		  = s
+merge s _                 = s
 
 minis :: Boolfun a -> [a] -> [a]
 minis rel = foldr f [] where f x (y:s) | rel x y = f x s
-				       | rel y x = f y s
-				       | True    = y:f x s
-			     f x _               = [x]
+                                       | rel y x = f y s
+                                       | True    = y:f x s
+                             f x _               = [x]
 maxis = minis . flip
 
 -- maxima f s returns the subset of all x in s such that f(x) agrees with the 
@@ -841,22 +841,22 @@ minima f s = [x | x <- s, f x == minimum (map f s)]
 
 sortC (x:s) = insert x s1 m
               where (s1,m) = sortC s
-	            insert x s@(y:xs) m = if x <= y then (x:s,m) else (y:ys,n+1)
-				          where (ys,n) = insert x xs m
-                    insert x _ m	= ([x],m)
+                    insert x s@(y:xs) m = if x <= y then (x:s,m) else (y:ys,n+1)
+                                          where (ys,n) = insert x xs m
+                    insert x _ m        = ([x],m)
 sortC s     = (s,0)
 
 -- PARSER
-		
+                
 type Parser = StateT String
 
 digit,delim :: MonadPlus m => Parser m Char
 digit  = msum $ map char ['0'..'9']
 delim  = msum $ map char " \n\t"
-					
+                                        
 char :: MonadPlus m => Char -> Parser m Char
 char chr = StateT $ \str -> do c:str <- return str
-	                       if c == chr then return (c,str) else mzero
+                               if c == chr then return (c,str) else mzero
 
 string :: MonadPlus m => String -> Parser m String
 string = mapM char
@@ -864,7 +864,7 @@ string = mapM char
 token :: MonadPlus m => Parser m a -> Parser m a
 token p = do space; a <- p; space; return a
           where space = many delim
-	  
+          
 tchar :: MonadPlus m => Char -> Parser m Char
 tchar = token . char
 
@@ -878,13 +878,13 @@ int = nat `mplus` do char '-'; n <- nat; return $ -n
 
 bintreeL :: Read a => Parser [ ] (BintreeL a)
 bintreeL = do a <- StateT reads
-     	      msum [do "(" <- StateT lex; left <- bintreeL
-     	     	       "," <- StateT lex; right <- bintreeL
+              msum [do "(" <- StateT lex; left <- bintreeL
+                       "," <- StateT lex; right <- bintreeL
                        ")" <- StateT lex; return $ Bin a left right,
                     do return $ Leaf a]
 
 -- instance Read a => Read (BintreeL a) where readsPrec _ = runST bintreeL
-			  
+                          
 -- BINOMIALS
 
 binom n k = product [k+1..n]`div`product [1..n-k]
@@ -897,7 +897,7 @@ pascal1 n = 1:[s!!(k-1)+s!!k | k <- [1..n-1]]++[1] where s = pascal1 $ n-1
 
 pascal2 0 = [1]
 pascal2 n = let s = pascal2 $ n-1
-	    in 1:[s!!(k-1)+s!!k | k <- [1..n-1]]++[1] 
+            in 1:[s!!(k-1)+s!!k | k <- [1..n-1]]++[1] 
 
 pascal3 0 = [1]
 pascal3 n = 1:[pascal3 (n-1)!!(k-1)+pascal3 (n-1)!!k | k <- [1..n-1]]++[1] 
@@ -906,19 +906,19 @@ pascal3 n = 1:[pascal3 (n-1)!!(k-1)+pascal3 (n-1)!!k | k <- [1..n-1]]++[1]
 
 cantor n s = foldl f s $ indices s
              where f s' i = updList s' (x*n+y) $ s!!i where (x,y) = p i
-	           p 0 = (0,0)
-	    	   p i = if even x
-		         then if even y
-			      then if x > 0 
-			           then if y' < n then (x-1,y') else (x',y)
-			           else if y' < n then (0,y') else (1,y) 
-			      else if x' < n then (x',y-1) else (x,y') 
-			 else if even y
-			      then if y > 0 
-			           then if x' < n then (x',y-1) else (x,y') 
-				   else if x' < n then (x',0) else (x,1)
-			      else if y' < n then (x-1,y') else (x',y) 
-			 where (x,y) = p $ i-1; x' = x+1; y' = y+1
+                   p 0 = (0,0)
+                   p i = if even x
+                         then if even y
+                              then if x > 0 
+                                   then if y' < n then (x-1,y') else (x',y)
+                                   else if y' < n then (0,y') else (1,y) 
+                              else if x' < n then (x',y-1) else (x,y') 
+                         else if even y
+                              then if y > 0 
+                                   then if x' < n then (x',y-1) else (x,y') 
+                                   else if x' < n then (x',0) else (x,1)
+                              else if y' < n then (x-1,y') else (x',y) 
+                         where (x,y) = p $ i-1; x' = x+1; y' = y+1
 
 mapfilter2 :: (a -> b -> Bool) -> (a -> b -> c) -> [a] -> [b] -> [c]
 mapfilter2 p f as bs = [f a b | a <- as, b <- bs, p a b]
@@ -927,7 +927,7 @@ filterL :: ([a] -> Bool) -> [[a]] -> [[a]]
 filterL p ss = [s | s <- sequence ss, p s]
 
 sublist :: [a] -> Int -> Int -> [a]
-sublist (x:s) 0 0   		   = [x]
+sublist (x:s) 0 0                  = [x]
 sublist (x:s) 0 j | j > 0          = x:sublist s 0 (j-1)
 sublist (x:s) i j | i > 0 && j > 0 = sublist s (i-1) (j-1)
 sublist _ _ _                      = []
@@ -937,14 +937,14 @@ sublists []    = [[]]
 sublists (a:s) = ss ++ map (a:) ss where ss = sublists s
 
 -- subsets n returns all nonempty proper subsets of [0..n-1].
-					    
+                                            
 subsets n = concatMap (subsetsN n) [1..n-1]
 
 -- subsetsN n k returns all subsets of [0..n-1] with exactly k elements.
 
 subsetsN _ 0 = [[]]
 subsetsN n k = [insertSet x xs | xs <- subsetsN n (k-1), 
- 				 x <- [0..n-1] `diff` xs] 
+                                 x <- [0..n-1] `diff` xs] 
 
 -- subsetsB n k returns all subsets of [0..n-1] with at most k elements.
 
@@ -952,7 +952,7 @@ subsetsB n k = concatMap (subsetsN n) [0..k]
 
 prod2 as bs = [(a,b) | a <- as, b <- bs]
 
-prod :: [[a]] -> [[a]]			-- prod = sequence
+prod :: [[a]] -> [[a]]                  -- prod = sequence
 prod (s:ss) = [a:s | a <- s, s <- prod ss] 
 prod _      = [[]]
 
@@ -980,10 +980,10 @@ instance Semiring Int  where add = (+);  mul = (*);  zero = 0; one = 1
 type BinRel a = [(a,a)]
 
 instance Eq a => Semiring (BinRel a) where 
-	         add = union
-	         mul rel rel' = [(a,c) | (a,b) <- rel, (b',c) <- rel', b == b']
-	         zero = []
-	         one = []
+                 add = union
+                 mul rel rel' = [(a,c) | (a,b) <- rel, (b',c) <- rel', b == b']
+                 zero = []
+                 one = []
 
 plusBR :: Eq a => BinRel a -> BinRel a
 plusBR rel = fixpt subset (add rel . mul rel) []
@@ -991,7 +991,7 @@ plusBR rel = fixpt subset (add rel . mul rel) []
 type BRfun a = a -> [a]
 
 instance Eq a => Semiring (BRfun a) where 
-		 add sucs sucs' = liftM2 union sucs sucs'
+                 add sucs sucs' = liftM2 union sucs sucs'
                  mul sucs sucs' = unionMap sucs' . sucs
                  zero = const []
                  one  = single
@@ -1017,11 +1017,11 @@ graph2Rel (G nodes sucs) = [(a,b) | a <- nodes, b <- sucs a]
 rel2Graph :: Eq a => BinRel a -> Graph a
 rel2Graph rel = G nodes sucs where 
                 (nodes,sucs) = foldl f ([], const []) rel
-	        f (as,g) (a,b) = (insert a as, update g a $ insert b $ g a)
+                f (as,g) (a,b) = (insert a as, update g a $ insert b $ g a)
                  
 insertL :: Eq a => (a,[a]) -> [(a,[a])] -> [(a,[a])]
 insertL x@(a,as) (y@(b,bs):s) = if a == b then (a,as `union` bs):s 
-					  else y:insertL x s
+                                          else y:insertL x s
 insertL x _ = [x]
 
 unionL :: Eq a => [(a,[a])] -> [(a,[a])] -> [(a,[a])]
@@ -1033,11 +1033,11 @@ unionMapL rel = foldl unionL [] . map rel
 closureF,closureT,warshall,diagonal,closureG :: Eq a => Graph a -> Graph a
 
 closureF (G nodes sucs) = G nodes sucs' where
-	                  sucs' = fixpt le (mul sucs . add one) zero
-	                  le sucs sucs' = all (liftM2 subset sucs sucs') nodes
+                          sucs' = fixpt le (mul sucs . add one) zero
+                          le sucs sucs' = all (liftM2 subset sucs sucs') nodes
 
-closureT (G nodes sucs) = G nodes sucs'		    -- only for acyclic graphs
-			  where sucs' = mul sucs $ add one sucs'
+closureT (G nodes sucs) = G nodes sucs'             -- only for acyclic graphs
+                          where sucs' = mul sucs $ add one sucs'
 
 warshall (G nodes sucs) = G nodes sucs' where       
                           sucs' = foldl trans sucs nodes
@@ -1047,24 +1047,24 @@ warshall (G nodes sucs) = G nodes sucs' where
                                          where cs = sucs b 
 
 diagonal (G nodes sucs) = G nodes $ fold2 update sucs nodes $ map add nodes
-		          where add a = insert a $ sucs a
+                          where add a = insert a $ sucs a
 
 closureG (G nodes sucs) = G nodes $ map fst . rel' . \a -> (a,[])
-			  where rel' = mul rel $ add one rel'
-			        rel (a,as) = [(b,insert a as) | b <- sucs a, 
-			  				        b `notElem` as]
+                          where rel' = mul rel $ add one rel'
+                                rel (a,as) = [(b,insert a as) | b <- sucs a, 
+                                                                b `notElem` as]
 
 instance Show a => Show (Graph a) where
          show (G nodes sucs) = concatMap f $ filter (not . null . sucs) nodes
-         		 where f a = '\n':show a++" -> "++show (sucs a)
+                         where f a = '\n':show a++" -> "++show (sucs a)
 
 instance (Show a,Show label) => Show (GraphL a label) where
          show (GL nodes sucs) = concatMap f $ filter (not . null . sucs) nodes
-         		  where f a = '\n':show a++" -> "++show (sucs a)
+                          where f a = '\n':show a++" -> "++show (sucs a)
 
 reachables,reachables' :: Eq a => Graph a -> a -> [a]
 reachables (G nodes sucs) a  = fixpt subset step [a]
-			       where step as = union as $ unionMap sucs as
+                               where step as = union as $ unionMap sucs as
 reachables' (G nodes sucs) a = fst $ fixpt le step ([a],[]) where
          le (as,visited) (bs,visited') = subset as bs && subset visited visited'
          step (as,visited) = (union as $ unionMap sucs $ diff as visited, 
@@ -1083,37 +1083,37 @@ mkMat d = mkArray ((1,1),(d,d))
 zeroM,oneM :: Semiring r => Int -> Matrix r
 zeroM d = mkMat d $ const zero
 oneM d  = mkMat d $ \(i,j) -> if i == j then one else zero
- 	       
+               
 instance Semiring r => Semiring (Matrix r) where
-	               add m m' = mkMat (dim m) $ liftM2 add (m!) (m'!)
-	               mul m m' = mkMat d $ \p -> foldl1 add $ map (f p) [1..d] 
-	                          where d = dim m
-	                                f (i,j) k = mul (m!(i,k)) $ m'!(k,j)
+                       add m m' = mkMat (dim m) $ liftM2 add (m!) (m'!)
+                       mul m m' = mkMat d $ \p -> foldl1 add $ map (f p) [1..d] 
+                                  where d = dim m
+                                        f (i,j) k = mul (m!(i,k)) $ m'!(k,j)
                        zero = zeroM 1; one = oneM 1
-	       
+               
 power :: (Eq r,Semiring r) => Matrix r -> Int -> Matrix r
 power m k = iterate (mul m) (oneM $ dim m)!!k
 
 plus :: (Eq r,Semiring r) => (r -> r -> Bool) -> Matrix r -> Matrix r
 plus le m = fixpt le' (add m . mul m) $ zeroM $ dim m
             where le' m m' = all (liftM2 le (m!) (m'!)) [(i,j) | i <- s, j <- s]
-		             where s = [1..dim m]
+                             where s = [1..dim m]
 
 instance Show (Matrix Bool) where 
          show m = concatMap f s where
                   s = [1..dim m]
                   f i = '\n':show i++" -> "++show [j | j <- s, m!(i,j)]
-		  
+                  
 instance Show r => Show (Matrix r) where 
          show m = concatMap f $ range ((1,1),(d,d)) where
                   d = dim m
-	          f (i,j) = '\n':show i++" -- "++show (m!(i,j))++" --> "++show j
+                  f (i,j) = '\n':show i++" -- "++show (m!(i,j))++" --> "++show j
 
 extendM :: (Eq r,Semiring r) => Matrix r -> Matrix r -> (Matrix r,Matrix r)
 extendM m m' = case (dim m,dim m') of (1,n) | m!(1,1) == zero  -> (zeroM n,m')
-				            | m!(1,1) == one   -> (oneM n,m')
+                                            | m!(1,1) == one   -> (oneM n,m')
                                       (n,1) | m'!(1,1) == zero -> (m,zeroM n)
-                           	            | m'!(1,1) == one  -> (m,oneM n)
+                                            | m'!(1,1) == one  -> (m,oneM n)
                                       _ -> (m,m')
 
 -- GRAPHS AS MATRICES
@@ -1125,7 +1125,7 @@ position1 s a = case search (== a) s of Just i -> i+1; _ -> 0
 
 graph2mat :: Eq a => Graph a -> Matrix Bool
 graph2mat (G nodes sucs) = mkMat (length nodes) f where
-			   f (i,j) = nodes!!(j-1) `elem` sucs (nodes!!(i-1)) 
+                           f (i,j) = nodes!!(j-1) `elem` sucs (nodes!!(i-1)) 
                          
 graphL2mat :: (Eq a,Semiring r) => GraphL a r -> Matrix r
 graphL2mat (GL nodes sucs) = mkMat (length nodes) f where
@@ -1135,13 +1135,13 @@ graphL2mat (GL nodes sucs) = mkMat (length nodes) f where
 
 mat2graph :: Eq a => GraphM a Bool -> Graph a
 mat2graph (M nodes m) = G nodes $ f . position1 nodes where
-		        f i = [nodes!!(j-1) | j <- [1..length nodes], m!(i,j)]
-		  
+                        f i = [nodes!!(j-1) | j <- [1..length nodes], m!(i,j)]
+                  
 mat2graphL :: (Eq a,Eq r,Semiring r) => GraphM a r -> GraphL a r
 mat2graphL (M nodes m) = GL nodes $ f . position1 nodes where
-		         f i = [(label,nodes!!(j-1)) | j <- [1..length nodes],
-		                 	               let label = m!(i,j), 
-		                 	               label /= zero]
+                         f i = [(label,nodes!!(j-1)) | j <- [1..length nodes],
+                                                       let label = m!(i,j), 
+                                                       label /= zero]
 
 closureM :: Eq a => Graph a -> Graph a
 closureM graph@(G nodes _) = mat2graph $ M nodes $ plus (<=) $ graph2mat graph
@@ -1151,35 +1151,35 @@ type Paths a = ([[a]],Int)
 instance Eq a => Semiring (Paths a) where 
          add (ps,m) (qs,n) = (rs,length rs) where rs = union ps qs
          mul (ps,m) (qs,n) = (rs,length rs)
-           		     where rs = filter f [p++q | p <- ps, q <- qs]
-           		     	   f p = length p == length (union [] p)
-	 zero = ([],0); one = ([],0)
+                             where rs = filter f [p++q | p <- ps, q <- qs]
+                                   f p = length p == length (union [] p)
+         zero = ([],0); one = ([],0)
 
 -- allpaths g labels every edge a->b of g with a list and the number of all 
 -- paths from a to b that contain every node of g at most once.
 
 allpaths :: Eq a => Graph a -> GraphL a Int         
 allpaths (G nodes sucs) = g $ mat2graphL $ M nodes $ plus le $ graphL2mat 
-				                   $ GL nodes $ map f . sucs
-		          where le (_,m) (_,n) = m <= n          
-		                f a = (([[a]],1),a)
-		                g (GL nodes sucs) = GL nodes $ map h . sucs
-		                h ((_,n),a) = (n,a)
+                                                   $ GL nodes $ map f . sucs
+                          where le (_,m) (_,n) = m <= n          
+                                f a = (([[a]],1),a)
+                                g (GL nodes sucs) = GL nodes $ map h . sucs
+                                h ((_,n),a) = (n,a)
      
 type Path a = ([a],Int)
 
 instance Semiring (Path a) where 
          add (p,m) (q,n) = if m <= n then (p,m) else (q,n)
          mul (p,m) (q,n) = (p++q,
-         		    if maxBound `elem` [m,n] then maxBound else m+n)
-	 zero = ([],maxBound); one = ([],0)
+                            if maxBound `elem` [m,n] then maxBound else m+n)
+         zero = ([],maxBound); one = ([],0)
 
 -- minpaths g labels every edge a->b of g with the shortest path from a to b and 
 -- its weight (= sum of the labels of the edges that form the path).
 
 minpaths :: Eq a => GraphL a Int -> GraphL a (Path a)
 minpaths (GL nodes sucs) = mat2graphL $ M nodes $ plus le $ graphL2mat 
-					        $ GL nodes $ map f . sucs
+                                                $ GL nodes $ map f . sucs
                            where le (_,m) (_,n) = m >= n
                                  f (n,a) = (([a],n),a) 
                                
@@ -1187,12 +1187,12 @@ minpaths (GL nodes sucs) = mat2graphL $ M nodes $ plus le $ graphL2mat
 
 graph1,graph2,graph3,graph4 :: Graph Int
 graph1 = G [1..6] $ \case 1 -> [2,3]; 3 -> [1,4,6]; 4 -> [1]
-           	          5 -> [3,5]; 6 -> [2,4,5]; _ -> []
+                          5 -> [3,5]; 6 -> [2,4,5]; _ -> []
 graph2 = G [1..6] $ \a -> if a `elem` [1..5] then [a+1] else []
 graph3 = G [1..6] $ \a -> [a+1..6]
 graph4 = G [1,11,12,111,112,121,122,1121,1122] $ 
-	   \a -> if a `elem` [1,11,12,112] then [a*10+1,a*10+2] else []
-			  
+           \a -> if a `elem` [1,11,12,112] then [a*10+1,a*10+2] else []
+                          
 clos1R = rel2Graph $ plusBR $ graph2Rel graph1
 clos1W = warshall graph1
 clos1F = closureF graph1
@@ -1290,10 +1290,10 @@ path4 = allpaths graph4
 -}
 graph5 :: GraphL Int Int
 graph5 = GL [1..5] $ \case 1 -> [(100,5),(40,2)]
-			   2 -> [(50,5),(10,3)]
-			   3 -> [(20,4)]
-			   4 -> [(10,5)]
-			   _ -> []
+                           2 -> [(50,5),(10,3)]
+                           3 -> [(20,4)]
+                           4 -> [(10,5)]
+                           _ -> []
 
 path5 = minpaths graph5
 {- 
@@ -1316,16 +1316,16 @@ spanTree graph = loop (sort r graph) (map single allNodes) []
 
 loop :: LGraph -> [[Int]] -> LGraph -> Maybe LGraph
 
-loop _ [_] tree 			 = Just tree
-loop [] (_:_:_) _   			 = Nothing
+loop _ [_] tree                          = Just tree
+loop [] (_:_:_) _                        = Nothing
 loop (edge@(m,_,n):graph) partition tree = 
                  if nodes1 == nodes2 then loop graph partition tree
                  else loop graph partition' $ edge:tree
                  where nodes n = head $ filter (n `elem`) partition
-	               nodes1 = nodes m
-		       nodes2 = nodes n
-		       partition' = (nodes1++nodes2):
-		   		    filter (`notElem` [nodes1,nodes2]) partition
+                       nodes1 = nodes m
+                       nodes2 = nodes n
+                       partition' = (nodes1++nodes2):
+                                    filter (`notElem` [nodes1,nodes2]) partition
 
 allNodes = [1..6]
 
@@ -1344,17 +1344,17 @@ graph6 = [(1,11,2),(2,11,3),(3,11,1),(3,11,4),(3,11,5),(4,11,5),(4,11,6)]
 
 kmp :: String -> String -> IO ()
 kmp pat text = writeFile "KMP" $ text++'\n':map f textInds where
-	       textInds = indices text
+               textInds = indices text
                f i = if i `elem` positions then '*' else ' '
-	       positions = snd $ foldl g (0,[]) textInds
-	       lg = length pat
-	       g (q,ps) i = if q' == lg then (tab!lg,i+1-lg:ps) else (q',ps) 
-	       		    where q' = loop q
-			          loop q = if q > 0 && not b then loop $ tab!q 
-				           else if b then q+1 else q
-				           where b = text!!i == pat!!q
+               positions = snd $ foldl g (0,[]) textInds
+               lg = length pat
+               g (q,ps) i = if q' == lg then (tab!lg,i+1-lg:ps) else (q',ps) 
+                            where q' = loop q
+                                  loop q = if q > 0 && not b then loop $ tab!q 
+                                           else if b then q+1 else q
+                                           where b = text!!i == pat!!q
                tab = array (1,lg) [(q,maximum $ s q) | q <- [1..lg]] where
-	       s q = [k | k <- [0..q-1], take k pat == drop (q-k) (take q pat)]
+               s q = [k | k <- [0..q-1], take k pat == drop (q-k) (take q pat)]
 
 kmp1 = kmp "kakao" "kakaakakakaoka"
 kmp2 = kmp "kakao" "kakaakakakabka"
@@ -1363,23 +1363,23 @@ kmp4 = kmp "kaka" "kakakakakakakakaka"
 kmp5 = kmp "ananas" "ananananassananas"
 
 -- LIST INVERSION
-	       
+               
 -- i in invertRel s n ks!!k iff k in s!!i. Assumption: k in [0..n].
 -- invertRel [[1,2,3],[1,2,3],[1,2,3]] 3 ---> [[],[0,1,2],[0,1,2],[0,1,2]]
 
 invertRel :: [[Int]] -> Int -> [[Int]]
 invertRel iss n = map f [0..n] where f k = searchAll (k `elem`) iss
-	       
+               
 -- i in (invertRel2 s m n!!k)!!lab iff k in (s!!i)!!lab. 
 -- Assumptions: lab in [0..m], k in [0..n]. For all i, length (s!!i) = m+1
 -- invertRel2 [[[1,2],[3]],[[1],[2,3]],[[],[1,2,3]]] 1 3 
--- 			     ---> [[[],[]],[[0,1],[2]],[[0],[1,2]],[[],[0,1,2]]]
+--                           ---> [[[],[]],[[0,1],[2]],[[0],[1,2]],[[],[0,1,2]]]
 
 invertRel2 :: [[[Int]]] -> Int -> Int -> [[[Int]]]
 invertRel2 isss m n = map f [0..n]
- 	  	      where f k = map g [0..m]
-	                          where g lab = searchAll h isss
-		                    		where h iss = k `elem` iss!!lab
+                      where f k = map g [0..m]
+                                  where g lab = searchAll h isss
+                                                where h iss = k `elem` iss!!lab
 
 -- VALIDITY OF PROPOSITIONAL FORMULAS
 
@@ -1405,7 +1405,7 @@ vars (p := q)  = vars p `union` vars q
 valid :: Prop -> Bool
 valid p = and $ map (mkFun p) $ args $ maximum (vars p)+1
 
-args :: Int -> [[Bool]]   	    -- creates all Boolean lists with n elements
+args :: Int -> [[Bool]]             -- creates all Boolean lists with n elements
 args 0 = [[]]
 args n = [b:bs | b <- [True,False], bs <- args $ n-1]
 
@@ -1429,13 +1429,13 @@ showTransR a s   = "\n& " ++ show a ++ " -> branch" ++ show s
 concatTrans :: Show a => [(a,[a])] -> String
 concatTrans = concatMap $ uncurry showTransR 
 
-showTransR' :: Show a => a -> DS.Set a -> String		-- not used
+showTransR' :: Show a => a -> DS.Set a -> String                -- not used
 showTransR' a s  = case DS.size s of 
-		  	0 -> ""
-		  	1 -> showTrans a $ findMin s
-		  	_ -> "\n& " ++ show a ++ " -> branch" ++ show s
+                        0 -> ""
+                        1 -> showTrans a $ findMin s
+                        _ -> "\n& " ++ show a ++ " -> branch" ++ show s
 
-showTransN :: Eq a => [a] -> a -> a -> String			-- not used
+showTransN :: Eq a => [a] -> a -> a -> String                   -- not used
 showTransN s  a b = showTrans (f a) $ f b where f = position s
 
 showTransRN :: Eq a => [a] -> (a,[a]) -> String
@@ -1449,48 +1449,48 @@ position s a = case search (== a) s of Just i -> i; _ -> 1000
 newtype Set a = Set {list :: [a]} 
 
 instance Eq a => Eq (Set a) where 
-		 s == s' = s <= s' && s' <= s
+                 s == s' = s <= s' && s' <= s
 
 instance Eq a => Ord (Set a) where
                  s <= s' = list s `subset` list s'
-		   
+                   
 instance Ord a => Monoid (Set a) where 
-		  mempty = Set []
-		  mappend (Set s) (Set s') = Set $ foldl (flip insertSet) s s'
+                  mempty = Set []
+                  mappend (Set s) (Set s') = Set $ foldl (flip insertSet) s s'
 
 insertSet :: Ord a => a -> [a] -> [a]
 insertSet x s@(y:s') = if x == y then s 
-				 else if x < y then x:s else y:insertSet x s'
+                                 else if x < y then x:s else y:insertSet x s'
 insertSet x _        = [x]
 
 instance Show a => Show (Set a) where
-		   show = ('{':) . (++"}") . init . tail . show . list
+                   show = ('{':) . (++"}") . init . tail . show . list
                 
 set1 = Set [1,2,3] <= Set [3,4,2,5,1,99]
 set2 = Set [1,2,3] >= Set [3,4,2,5,1,99]
 
 mkSet :: Eq a => [a] -> Set a
-mkSet = Set . union []		
+mkSet = Set . union []          
 
 {- Since constraints are not allowed in Monad instances, Set cannot be a Monad 
    instance:
 
 instance Monad Set
          where (>>=) :: Eq b => Set a -> (a -> Set b) -> Set b
-	       Set s >>= f = Set $ unionMap (list . f) s
-	       return a = Set [a]
-	       fail _ = mzero
+               Set s >>= f = Set $ unionMap (list . f) s
+               return a = Set [a]
+               fail _ = mzero
 
 instance MonadPlus Set 
          where mzero = Set []
-	       mplus (Set s) (Set s') = Set $ union s s' -}
+               mplus (Set s) (Set s') = Set $ union s s' -}
 
 -- RELATION TYPES
 
 newtype Rel a = Rel {rlist :: [(a,[a])]} 
 
 instance Eq a => Eq (Rel a) where 
-		 r == r' = r <= r' && r' <= r
+                 r == r' = r <= r' && r' <= r
 
 instance Eq a => Ord (Rel a) where
                  r <= r' = Set dom_r <= Set (dom r') && vals r <= vals r'
@@ -1498,35 +1498,35 @@ instance Eq a => Ord (Rel a) where
                                  dom_r = dom r
                                  fun r a = fromJust $ lookup a r
                                  vals r = Set $ map (fun $ rlist r) dom_r
-		   
+                   
 instance Ord a => Monoid (Rel a) where 
-		  mempty = Rel []
-		  mappend (Rel r) (Rel r') = Rel $ foldl insertRel r r' 
-		 
+                  mempty = Rel []
+                  mappend (Rel r) (Rel r') = Rel $ foldl insertRel r r' 
+                 
 insertRel :: Ord a => [(a,[a])] -> (a,[a]) -> [(a,[a])]
 insertRel (p@(x,s):r) p'@(y,s') = if x == y then (x,s`union`s'):r
-					    else if y < x then p:p':r
-					                  else p:insertRel r p'
+                                            else if y < x then p:p':r
+                                                          else p:insertRel r p'
 insertRel _ p = [p]
 
 {-
 instance Ord a => Monoid (DS.Set a) where mempty = DS.empty
-		 	                  mappend = DS.union
+                                          mappend = DS.union
 
 type RelD a = DMS.Map a [a]
 
 instance Ord a => Monoid (RelD a) where mempty = DMS.empty
-		 	                mappend = DMS.union
+                                        mappend = DMS.union
 -} 
 
 assoc :: (Eq a,Eq b) => [(a,[b])] -> [(a,[b])]
 assoc ((_,[]):rel) = assoc rel
 assoc ((a,bs):rel) = insertAssoc a bs (assoc rel)
-assoc _ 	   = []
-		      
+assoc _            = []
+                      
 insertAssoc :: (Eq a,Eq b) => a -> [b] -> [(a,[b])] -> [(a,[b])]
 insertAssoc a bs (p@(x,cs):s) | a == x = if null cs then insertAssoc a bs s
- 					 else insertAssoc a (bs`union`cs) s
+                                         else insertAssoc a (bs`union`cs) s
                               | True   = p:insertAssoc a bs s
 insertAssoc a bs _                     = [(a,bs)]
 
@@ -1536,12 +1536,12 @@ assoc2 ((a,b,cs):rel) = insertAssoc2 a [(b,cs)] (assoc2 rel)
 assoc2 _              = []
 
 insertAssoc2 :: (Eq a,Eq b,Eq c) 
- 	        => a -> [(b,[c])] -> [(a,[(b,[c])])] -> [(a,[(b,[c])])]
+                => a -> [(b,[c])] -> [(a,[(b,[c])])] -> [(a,[(b,[c])])]
 insertAssoc2 a bcs (t@(x,ccs):s) 
-		  | a == x = if null ccs then insertAssoc2 a bcs s
- 				         else insertAssoc2 a (foldr f ccs bcs) s
+                  | a == x = if null ccs then insertAssoc2 a bcs s
+                                         else insertAssoc2 a (foldr f ccs bcs) s
                   | True   = t:insertAssoc2 a bcs s
-		  	     where f (b,cs) = insertAssoc b cs
+                             where f (b,cs) = insertAssoc b cs
 insertAssoc2 a bcs _       = [(a,bcs)]
 
 -- PARTITIONS
@@ -1551,18 +1551,18 @@ insertAssoc2 a bcs _       = [(a,bcs)]
 partsL [a] [[a]]
 partsL (a:s) ([a]:part)    <== partsL s part
 partsL (a:s) ((a:s'):rest) <== partsL s (s':rest) -}
-					
+                                        
 -- partsL/M s returns all list partitions of s.
-					
+                                        
 partsL,partsLM :: [a] -> [[[a]]]
 
 partsL [a]     = [[[a]]]
 partsL (a:s)   = concatMap glue $ partsL s
-	         where glue part@(s':rest) = [[a]:part,(a:s'):rest]	
-	         
+                 where glue part@(s':rest) = [[a]:part,(a:s'):rest]     
+                 
 partsLM [a]    = [[[a]]]
 partsLM (a:s)  = do part@(s':rest) <- partsLM s
-		    [[a]:part,(a:s'):rest]	
+                    [[a]:part,(a:s'):rest]      
 
 partsC :: Int -> Int -> [[[Int]]]
 partsC n lg = [p | p <- partsLM [1..n], all ((>= lg) . length) p]
@@ -1576,19 +1576,19 @@ parts,partsM :: [a] -> [[[a]]]
 parts [a]   = [[[a]]]
 parts (a:s) = concatMap (glue []) $ parts s
               where glue part (s:rest) = ((a:s):part++rest):glue (s:part) rest
-	            glue part _        = [[a]:part]
+                    glue part _        = [[a]:part]
 
 partsM [a]   = [[[a]]]
 partsM (a:s) = concatMap (glue []) $ parts s
                where glue part (s:rest) = ((a:s):part++rest):glue (s:part) rest
-	             glue part _        = [[a]:part]
+                     glue part _        = [[a]:part]
 
 partsS :: Eq a => [a] -> [Set (Set a)]
 partsS [a] = [Set [Set [a]]]
 partsS s   = unionMap f $ indices s
-	     where f i = concatMap (glue a) $ partsS $ remove a s where a = s!!i
-	           glue a (Set part@(Set s:rest)) = map (Set $)[Set [a]:part,
-		  				                Set (a:s):rest]
+             where f i = concatMap (glue a) $ partsS $ remove a s where a = s!!i
+                   glue a (Set part@(Set s:rest)) = map (Set $)[Set [a]:part,
+                                                                Set (a:s):rest]
 
 partsno 0 = 1
 partsno n = sum $ map f [0..n-1] where f i = binom (n-1) i*partsno i
@@ -1598,24 +1598,24 @@ pp = length (partsS [0..9]) == partsno 10
 partsnos = map partsno [1..10] -- [1,2,5,15,52,203,877,4140,21147,115975]
 
 -- INTERVALS
-					
+                                        
 -- intervals/M m n returns all partitions of the interval (m,n)
 
 {- logic program
 
-intervals m n [(m,n)]	     <== m+1 = n
+intervals m n [(m,n)]        <== m+1 = n
 intervals m n ((m,m+1):ints) <== intervals s (m+1) n ints
 intervals m n ((m,k):rest)   <== intervals s (m+1) n ((_,k):rest) -}
-					
+                                        
 intervals,intervalsM :: Int -> Int -> [[(Int,Int)]]
 intervals m n | m' == n  = [[(m,n)]] 
               | True     = concatMap glue $ intervals m' n
-	                 where m' = m+1
-	                       glue ints@((_,k):rest) = [(m,m'):ints,(m,k):rest]
+                         where m' = m+1
+                               glue ints@((_,k):rest) = [(m,m'):ints,(m,k):rest]
 intervalsM m n | m' == n = [[(m,n)]] 
                | True    = do ints@((_,k):rest) <- intervalsM m' n
-			      [(m,m'):ints,(m,k):rest]
-	                   where m' = m+1
+                              [(m,m'):ints,(m,k):rest]
+                           where m' = m+1
 intervalsC n lg = [p | p <- intervalsM 0 n, all f p] where f (m,n) = n-m >= lg
 
 -- intervalsC 20 5
@@ -1636,40 +1636,40 @@ unionBag = foldl insertBag
 
 insert3,remove3 :: Ord a => [([a],[a],[a])] -> ([a],[a],[a]) -> [([a],[a],[a])]
 insert3 s@(t@(x,y,z):s') t'@(x',y',z') = 
-				    if DL.sort (x++y++z) == DL.sort (x'++y'++z')
-				    then s else t:insert3 s' t'
+                                    if DL.sort (x++y++z) == DL.sort (x'++y'++z')
+                                    then s else t:insert3 s' t'
 insert3 _ t = [t]
 remove3 s (x,y,z) = filter f s where
-		    f (x',y',z') = DL.sort (x++y++z) /= DL.sort (x'++y'++z')
-		    
+                    f (x',y',z') = DL.sort (x++y++z) /= DL.sort (x'++y'++z')
+                    
 union3,diff3 :: Ord a => [([a],[a],[a])] -> [([a],[a],[a])] -> [([a],[a],[a])]
 union3 = foldl insert3
 diff3  = foldl remove3
 
 insertBagR :: Eq a => [([a],[[a]])] ->  ([a],[[a]])-> [([a],[[a]])] 
 insertBagR (p@(x,s):r) p'@(x',s') = if isPerm x x' 
-				    then (x,foldl insertBag s s'):r 
-				    else p:insertBagR r p'
+                                    then (x,foldl insertBag s s'):r 
+                                    else p:insertBagR r p'
 insertBagR _ p = [p]
-		 
+                 
 insertBagR3 :: Eq a => [(([a],[a],[a]),[([a],[a],[a])])] 
-		    ->  (([a],[a],[a]),[([a],[a],[a])])
-		    -> [(([a],[a],[a]),[([a],[a],[a])])] 
+                    ->  (([a],[a],[a]),[([a],[a],[a])])
+                    -> [(([a],[a],[a]),[([a],[a],[a])])] 
 insertBagR3 (p@((x,y,z),s):r) p'@((x',y',z'),s') = 
-	      if and $ zipWith isPerm [x,y,z] [x',y',z']
-	      then ((x,y,z),zip3 s7 s8 s9):r else p:insertBagR3 r p'
-	      where (s1,s2,s3) = unzip3 s
-	            (s4,s5,s6) = unzip3 s'
-		    [s7,s8,s9] = zipWith (foldl insertBag) [s1,s2,s3] [s4,s5,s6]
+              if and $ zipWith isPerm [x,y,z] [x',y',z']
+              then ((x,y,z),zip3 s7 s8 s9):r else p:insertBagR3 r p'
+              where (s1,s2,s3) = unzip3 s
+                    (s4,s5,s6) = unzip3 s'
+                    [s7,s8,s9] = zipWith (foldl insertBag) [s1,s2,s3] [s4,s5,s6]
 insertBagR3 _ p = [p]
 
 nextPerm :: Ord a => [a] -> [a]
 nextPerm s@(x:xs) = if sorted s then reverse s else next [x] xs where
           next s@(x:_) (y:ys) = if x <= y then next (y:s) ys else swap s where
                    swap [x]      = y:x:ys
-		   swap (x:z:xs) = if z > y then x:swap (z:xs) else y:z:xs++x:ys
-	  nextPerm _ = []
-	  
+                   swap (x:z:xs) = if z > y then x:swap (z:xs) else y:z:xs++x:ys
+          nextPerm _ = []
+          
 {- logic programs
 
 permsLR [] []
@@ -1691,59 +1691,59 @@ loop [] s s
 loop s s' z <== x <- s /\ c (x:s') /\ loop (remove x s) (x:s') z 
 -}
 
-permsLR,permsLRM,permsL,permsLM :: [a] -> [[a]]	
-					-- computes all permutations of a list
+permsLR,permsLRM,permsL,permsLM :: [a] -> [[a]] 
+                                        -- computes all permutations of a list
 permsLR []  = [[]]
 permsLR s   = concatMap f $ indices s where
-	      f i = map (s!!i:) $ permsLR $ take i s++drop (i+1) s
+              f i = map (s!!i:) $ permsLR $ take i s++drop (i+1) s
 permsLRM [] = [[]]
 permsLRM s  = do i <- indices s
-		 s' <- permsLRM $ take i s++drop (i+1) s
-		 [s!!i:s']
+                 s' <- permsLRM $ take i s++drop (i+1) s
+                 [s!!i:s']
 permsL s  = loop s [] where 
-	    loop [] s = [s]		    
-	    loop s s' = concatMap f $ indices s where
-	   	        f i = loop (take i s++drop (i+1) s) $ s!!i:s'
+            loop [] s = [s]                 
+            loop s s' = concatMap f $ indices s where
+                        f i = loop (take i s++drop (i+1) s) $ s!!i:s'
 permsLM s = loop s [] where 
-	    loop [] s = [s]		    
-	    loop s s' = do i <- indices s
-	   		   loop (take i s++drop (i+1) s) $ s!!i:s'
+            loop [] s = [s]                 
+            loop s s' = do i <- indices s
+                           loop (take i s++drop (i+1) s) $ s!!i:s'
 
 permsR,permsRM,perms,permsM :: Eq a => [a] -> [[a]]  
-					-- computes all permutations of a list
-permsR []  = [[]]			-- with pairwise different elements				
+                                        -- computes all permutations of a list
+permsR []  = [[]]                       -- with pairwise different elements                             
 permsR s   = concatMap f s where f x = map (x:) $ permsR $ remove x s
 permsRM [] = [[]]
 permsRM s  = do x <- s
-		s' <- permsRM $ remove x s
-		[x:s']
-perms s  = loop s [] where		
-           loop [] s = [s]		    
+                s' <- permsRM $ remove x s
+                [x:s']
+perms s  = loop s [] where              
+           loop [] s = [s]                  
            loop s s' = concatMap f s where f x = loop (remove x s) $ x:s'
-permsM s = loop s [] where		
-           loop [] s = [s]		    
+permsM s = loop s [] where              
+           loop [] s = [s]                  
            loop s s' = do x <- s
-           		  loop (remove x s) $ x:s'
+                          loop (remove x s) $ x:s'
 
 permsC,permsCM,permsLCM :: Eq a => ([a] -> Bool) -> [a] -> [[a]]
-permsC c s  = loop s [] where		-- computes all permutations of a list
-              loop [] s = [s]		-- with pairwise different elements
-              				-- satisfying c  
+permsC c s  = loop s [] where           -- computes all permutations of a list
+              loop [] s = [s]           -- with pairwise different elements
+                                        -- satisfying c  
               loop s s' = concatMap f s where 
-              	          f x | c new = loop (remove x s) new
-              	              | True  = [] where new = x:s'
-permsCM c s = loop s [] where		
-              loop [] s = [s]		
-              loop s s' = do x <- s  	  
-              		     let new = x:s'
-              		     guard $ c new
-              		     loop (remove x s) new
+                          f x | c new = loop (remove x s) new
+                              | True  = [] where new = x:s'
+permsCM c s = loop s [] where           
+              loop [] s = [s]           
+              loop s s' = do x <- s       
+                             let new = x:s'
+                             guard $ c new
+                             loop (remove x s) new
 permsLCM c s = loop s [] where 
-	       loop [] s = [s]		    
-	       loop s s' = do i <- indices s
-	       		      let new = s!!i:s'
-	       		      guard $ c new
-	       		      loop (take i s++drop (i+1) s) new
+               loop [] s = [s]              
+               loop s s' = do i <- indices s
+                              let new = s!!i:s'
+                              guard $ c new
+                              loop (take i s++drop (i+1) s) new
 
 type Branch  state m = state -> [state] -> m ()
 type Branch' state m = state -> DS.Set state -> m ()
@@ -1762,67 +1762,67 @@ type Branch' state m = state -> DS.Set state -> m ()
 safe :: Int -> [Int] -> Bool
 safe i (k:col:val) = col-i /= k && k /= col+i && safe (i+1) (k:val)
 safe _ _           = True
-				          
+                                          
 queensR,queensI :: Int -> [[Int]]             
 queensR n = qrec [1..n] where
             qrec :: [Int] -> [[Int]]
             qrec [] = [[]]
             qrec s  = do k <- s
-             	         val <- qrec $ remove k s
-             	         let val' = k:val
-             	         guard $ safe 1 val'
-             	         [val']
+                         val <- qrec $ remove k s
+                         let val' = k:val
+                         guard $ safe 1 val'
+                         [val']
 queensI n = permsLCM (safe 1) [1..n] 
-	         
-type Qstate = ([Int],[Int])  		-- free resp. occupied column indices
-type Qtrans = (Qstate,[Qstate])  	-- state transitions
+                 
+type Qstate = ([Int],[Int])             -- free resp. occupied column indices
+type Qtrans = (Qstate,[Qstate])         -- state transitions
 
-qfirst :: Int -> Qstate	
+qfirst :: Int -> Qstate 
 qfirst n = ([1..n],[])
 
 qsuccessors :: Qstate -> [Qstate]
 qsuccessors st@(s,val) = do k <- s
-			    let val' = k:val
-			    guard $ safe 1 val'
-			    [(remove k s,val')]
+                            let val' = k:val
+                            guard $ safe 1 val'
+                            [(remove k s,val')]
 
-qloop :: Monad m => Branch Qstate m -> Qstate -> ListT m [Int]	
+qloop :: Monad m => Branch Qstate m -> Qstate -> ListT m [Int]  
 qloop _ ([],val) = return val
 qloop branch st  = do lift $ branch st sts
-	              msum $ map (qloop branch) sts
-		   where sts = qsuccessors st
+                      msum $ map (qloop branch) sts
+                   where sts = qsuccessors st
 
 qheader file n = writeFile file $ "specs: queens\naxioms:\nprocs == [1.." ++ 
-				  show n ++ "]"
-		   
+                                  show n ++ "]"
+                   
 queens,queensIO,queensS :: Int -> IO (Int,[[Int]])
 
 queens n   = return (length solutions,solutions)
-	     where Id solutions = runLT $ qloop branch $ qfirst n
+             where Id solutions = runLT $ qloop branch $ qfirst n
                    branch :: Branch Qstate Id
-	           branch _ _ = Id ()
+                   branch _ _ = Id ()
 
 queensIO n = do qheader "queensIO" n
-	        solutions <- runLT $ qloop branch $ qfirst n
-	        return (length solutions,solutions)
-	     where branch :: Branch Qstate IO
-	           branch st sts = appendFile "queensIO" $ showTransR st sts
-	           
+                solutions <- runLT $ qloop branch $ qfirst n
+                return (length solutions,solutions)
+             where branch :: Branch Qstate IO
+                   branch st sts = appendFile "queensIO" $ showTransR st sts
+                   
 queensS n  = do qheader "queensS" n
- 	        appendFile "queensS" transitions
-	        return (length solutions,solutions)
+                appendFile "queensS" transitions
+                return (length solutions,solutions)
              where (transitions,solutions) = runLT $ qloop branch $ qfirst n
                    branch :: Branch Qstate ((,) String)
-	           branch st sts = (showTransR st sts,())
-			
+                   branch st sts = (showTransR st sts,())
+                        
 queensW :: Int -> IO (Int,Int,[[Int]])
 
 queensW n  = do qheader "queensW" n
-	        appendFile "queensW" $ concatTrans transitions
-	        return (length solutions,length transitions,solutions) 
+                appendFile "queensW" $ concatTrans transitions
+                return (length solutions,length transitions,solutions) 
              where (transitions,solutions) = runLT $ qloop branch $ qfirst n
-	           branch :: Branch Qstate ((,) [Qtrans])
-	           branch st sts = ([(st,sts)],())
+                   branch :: Branch Qstate ((,) [Qtrans])
+                   branch st sts = ([(st,sts)],())
 
 -- MUTUAL EXCLUSION
 
@@ -1836,24 +1836,24 @@ queensW n  = do qheader "queensW" n
 type Mstate   = ([Int],[Int],[Int]) 
 type Mtrans   = (Mstate,[Mstate])
 
-mfirst :: Int -> Mstate	   	  
-mfirst n = ([1..n],[],[])  	  
+mfirst :: Int -> Mstate           
+mfirst n = ([1..n],[],[])         
 
 msuccessors :: Mstate -> [Mstate]
 msuccessors (is,ws,cs) = concat [do i <- is
-				    [(remove i is,i:ws,cs)],
-			         do nonempty ws
-			            guard $ null cs
-			            [(is,init ws,[last ws])],
-			         do nonempty cs
-			            [(insertSet (head cs) is,ws,[])]]
-		      
+                                    [(remove i is,i:ws,cs)],
+                                 do nonempty ws
+                                    guard $ null cs
+                                    [(is,init ws,[last ws])],
+                                 do nonempty cs
+                                    [(insertSet (head cs) is,ws,[])]]
+                      
 mloop :: Monad m => Branch Mstate m -> [Mstate] -> [Mstate] -> m [Mstate]
 mloop branch old (st:new) = do branch st sts
-			       mloop branch old' new' 
-			    where sts = msuccessors st
-			    	  old' = st:old
-			          new' = union new $ diff sts old'
+                               mloop branch old' new' 
+                            where sts = msuccessors st
+                                  old' = st:old
+                                  new' = union new $ diff sts old'
 mloop _ old _ = return old
 
 mheader file n = writeFile file $ "axioms:\nstates == " ++ show [mfirst n]
@@ -1861,43 +1861,43 @@ mheader file n = writeFile file $ "axioms:\nstates == " ++ show [mfirst n]
 mutexIO,mutexS,mutexW,mutexR,mutexD,mutexN :: Int -> IO Int
 
 mutexIO n = do mheader "mutexIO" n
-	       states <- mloop branch [] [mfirst n]
-	       return $ length states
-	    where branch :: Branch Mstate IO
+               states <- mloop branch [] [mfirst n]
+               return $ length states
+            where branch :: Branch Mstate IO
                   branch st sts = appendFile "mutexIO" $ showTransR st sts
 
 {- ghci execution times: mutexIO 5: 0.16 secs
-	                 mutexIO 6: 2.89 secs
-		         mutexIO 7: 292.68 secs -}
+                         mutexIO 6: 2.89 secs
+                         mutexIO 7: 292.68 secs -}
 
 -- mutexS computes the set of state transitions as an element of the monoid
 -- [String] and the set of states as output of the writer monad 
 -- ([String],[Mstate]).
 
 mutexS n  = do mheader "mutexS" n
- 	       appendFile "mutexS" transitions
-	       return $ length states
+               appendFile "mutexS" transitions
+               return $ length states
             where (transitions,states) = mloop branch [] [mfirst n]
                   branch :: Branch Mstate ((,) String)
                   branch st sts = (showTransR st sts,())
-			                        
+                                                
 -- mutexW computes the set of state transitions as element of the monoid
 -- [Mtrans] and the set of states as output of the writer monad 
 -- ([Mtrans],[Mstate]).
 
 mutexW n  = do mheader "mutexW" n 
-	       appendFile "mutexW" $ concatTrans transitions
- 	       return $ length states
+               appendFile "mutexW" $ concatTrans transitions
+               return $ length states
             where (transitions,states) = mloop branch [] [mfirst n]
                   branch :: Branch Mstate ((,) [Mtrans])
                   branch st sts = ([(st,sts)],())
-			                        
+                                                
 -- mutexR computes the sets of transitions as an element of the monoid 
 -- Rel Mstate and the set of states as output of the writer monad 
--- (Rel Mstate,[Mstate]).					-- slow 
+-- (Rel Mstate,[Mstate]).                                       -- slow 
 
 mutexR n  = do mheader "mutexR" n 
-	       appendFile "mutexR" $ concatTrans transitions
+               appendFile "mutexR" $ concatTrans transitions
                return $ length states
             where (Rel transitions,states) = mloop branch [] [mfirst n]
                   branch :: Branch Mstate ((,) (Rel Mstate))
@@ -1907,21 +1907,21 @@ type RelD a = DMS.Map a [a]
 
 -- mutexD computes the sets of transitions as an element of the monoid 
 -- RelD Mstate and the set of states as output of the writer monad 
--- (RelD Mstate,[Mstate]).					-- fast
+-- (RelD Mstate,[Mstate]).                                      -- fast
 
 mutexD n  = do mheader "mutexD" n 
-	       appendFile "mutexD" $ concatTrans transitionsL
- 	       return $ length states
+               appendFile "mutexD" $ concatTrans transitionsL
+               return $ length states
             where (transitions,states) = mloop branch [] [mfirst n]
                   transitionsL = DMS.toList transitions
                   branch :: Branch Mstate ((,) (DMS.Map Mstate [Mstate]))
                   branch st sts = (DMS.singleton st sts,())
-			                        
+                                                
 -- mutexN works as mutexD. In addition, states in transitions are replaced
 -- by their respective positions in the list of all states returned by mloop.
 
 mutexN n  = do mheader "mutexN" n 
-	       appendFile "mutexN" $ concatMap (showTransRN states) transitionsL
+               appendFile "mutexN" $ concatMap (showTransRN states) transitionsL
                return $ length states
             where (transitions,states) = mloop branch [] [mfirst n]
                   transitionsL = DMS.toList transitions
@@ -1933,13 +1933,13 @@ mutexN n  = do mheader "mutexN" n
 
 mloopN :: Monad m => Branch Int m -> [Mstate] -> [Mstate] -> m [Mstate]
 mloopN branch old (st:new) = do branch i is 
-				mloopN branch old' new'
-		   	     where old' = old ++ [st]
-			           new' = new `union` diff sts old'
-			           sts = msuccessors st
-			           i:is = map (position $ old'++new') $ st:sts
+                                mloopN branch old' new'
+                             where old' = old ++ [st]
+                                   new' = new `union` diff sts old'
+                                   sts = msuccessors st
+                                   i:is = map (position $ old'++new') $ st:sts
 mloopN _ old _             = return old
-			                        
+                                                
 -- mutexN2 works as mutexD. In addition, in every iteration of mloopN, 
 -- states in transitions are represented by their respective positions in the 
 -- list of all states built up stepwise by mloopN.
@@ -1947,7 +1947,7 @@ mloopN _ old _             = return old
 mutexN2 :: Int -> IO Int
 
 mutexN2 n = do mheader "mutexN2" n 
-	       appendFile "mutexN2" $ concatTrans transitionsL
+               appendFile "mutexN2" $ concatTrans transitionsL
                return $ length states
             where (transitions,states) = mloopN branch [] [mfirst n]
                   transitionsL = DMS.toList transitions
@@ -1975,24 +1975,24 @@ dsize,bricksh,bricksv :: Int -> Rects -> Bool
 dsize n dissect   = length dissect == n
 bricksh h dissect = null $ do rect@(x,_,_,y) <- dissect
                               guard $ x > 0 && y < h
-			      let f (x',y',_,_) = x == x' && y == y'
-			      guard $ any f $ DL.delete rect dissect
+                              let f (x',y',_,_) = x == x' && y == y'
+                              guard $ any f $ DL.delete rect dissect
 bricksv b dissect = null $ do rect@(_,y,x,_) <- dissect
                               guard $ y > 0 && x < b
-			      let f (x',y',_,_) = x == x' && y == y'
-			      guard $ any f $ DL.delete rect dissect
-          		      	      
+                              let f (x',y',_,_) = x == x' && y == y'
+                              guard $ any f $ DL.delete rect dissect
+                                      
 showDis :: Int -> RGB -> Rects -> String
 showDis mode color rects = "turt[" ++ init (concat $ zipWith f rects [1..n]) 
-				   ++ "]" 
+                                   ++ "]" 
         where n = length rects
               m = 3*n
               f (x,y,x',y') i = if mode `elem` [0,1,4,5] 
- 				then string n i rect
-         			else string m (3*i) tria1 ++
-         			     string m (3*i+1) tria2 ++
-         			     string m (3*i+2) tria3 ++
-         			     string m (3*i+3) tria4
+                                then string n i rect
+                                else string m (3*i) tria1 ++
+                                     string m (3*i+1) tria2 ++
+                                     string m (3*i+2) tria3 ++
+                                     string m (3*i+3) tria4
                           where [x1,y1,x2,y2] = map (*30) [x,y,x',y']
                                 rect@[ul,ur,lr,ll] = 
                                     map float2 [(x1,y1),(x2,y1),(x2,y2),(x1,y2)]
@@ -2002,16 +2002,16 @@ showDis mode color rects = "turt[" ++ init (concat $ zipWith f rects [1..n])
                                 tria3 = [lr,ll,mid]
                                 tria4 = [ul,ll,mid]
               string n i path = '\n':"shine(11)$" ++ show (hue 1 color n i) ++ 
-              			fillmode ++ init (tail $ show path) ++ "],"
+                                fillmode ++ init (tail $ show path) ++ "],"
               fillmode = if even mode then "$pathF[" else "$pathSF["
-             	   
+                   
 showDiss :: Int -> [Rects] -> String
 showDiss _ []      = "[]"
 showDiss mode sols = '[':init (init $ concat $ zipWith f sols [1..n]) ++ "]\n"
-		     where f rects i = showDis mode color rects ++ ",\n"
-		     		       where color = if mode < 4 then red 
-		     		       		     else hue 2 red n i
-		           n = length sols
+                     where f rects i = showDis mode color rects ++ ",\n"
+                                       where color = if mode < 4 then red 
+                                                     else hue 2 red n i
+                           n = length sols
 
 type Rectangle = (Int,Int,Int,Int)
 type Rects     = [Rectangle]
@@ -2022,54 +2022,54 @@ type Dparams   = (Rectangle -> Bool,Int,Rects -> Bool,Bool,Int,Int)
 
 dsuccessors :: (Rectangle -> Bool) -> Int -> Dstate -> Dstates
 dsuccessors c bound ((0,0,x2,y2):top,left,inner) =
-	      concat [-- split vertically:
-		      do guard $ lg < bound && x2 > 1
-		         x1 <- [1..x2-1]
-		         [((0,0,x1,y2):(x1,0,x2,y2):top,left,inner)],
-	              -- split horizontally:
-		      do guard $ lg < bound && y2 > 1
-		         y1 <- [1..y2-1]
-		       	 [((0,0,x2,y1):top,(0,y1,x2,y2):left,inner)],
-	              -- join horizontally:
-	              do nonempty top
-		         let (x1,0,x3,y3):top1 = top
-		             new = (x1,y2,x3,y3)
-		         guard $ x1 == x2 && y3 > y2 && c new
-		         [((0,0,x3,y2):top1,left,new:inner)],
-	              -- join vertically:
-		      do nonempty left
-		         let (0,y1,x3,y3):left1 = left   
-		             new = (x2,y1,x3,y3)
-		         guard $ y1 == y2 && x3 > x2 && c new
-		         [((0,0,x2,y3):top,left1,new:inner)]]
+              concat [-- split vertically:
+                      do guard $ lg < bound && x2 > 1
+                         x1 <- [1..x2-1]
+                         [((0,0,x1,y2):(x1,0,x2,y2):top,left,inner)],
+                      -- split horizontally:
+                      do guard $ lg < bound && y2 > 1
+                         y1 <- [1..y2-1]
+                         [((0,0,x2,y1):top,(0,y1,x2,y2):left,inner)],
+                      -- join horizontally:
+                      do nonempty top
+                         let (x1,0,x3,y3):top1 = top
+                             new = (x1,y2,x3,y3)
+                         guard $ x1 == x2 && y3 > y2 && c new
+                         [((0,0,x3,y2):top1,left,new:inner)],
+                      -- join vertically:
+                      do nonempty left
+                         let (0,y1,x3,y3):left1 = left   
+                             new = (x2,y1,x3,y3)
+                         guard $ y1 == y2 && x3 > x2 && c new
+                         [((0,0,x2,y3):top,left1,new:inner)]]
               where lg = length top+length left+length inner+1
 
 dsuccessorsDL :: (Rectangle -> Bool) -> Int -> Dstate -> Dstates    -- not used
 dsuccessorsDL c bound ((0,0,x2,y2):top,left,inner) =
-	      concat [-- split vertically:
-		      do guard $ lg < bound && x2 > 1
-		         x1 <- [1..x2-1]
-		         [(DL.insert (0,0,x1,y2) $ DL.insert (x1,0,x2,y2) top,
-		           left,inner)],
-	              -- split horizontally:
-		      do guard $ lg < bound && y2 > 1
-		         y1 <- [1..y2-1]
-		         [(DL.insert (0,0,x2,y1) top,
-		           DL.insert (0,y1,x2,y2) left,inner)],
-	              -- join horizontally:
-	              do nonempty top
-		         let (x1,0,x3,y3):top1 = top
-		             new = (x1,y2,x3,y3)
-		         guard $ x1 == x2 && y3 > y2 && c new
-		         [(DL.insert (0,0,x3,y2) top1,left,
-		           DL.insert new inner)],
-	              -- join vertically:
-		      do nonempty left
-		         let (0,y1,x3,y3):left1 = left   
-		             new = (x2,y1,x3,y3)
-		         guard $ y1 == y2 && x3 > x2 && c new
-		         [(DL.insert (0,0,x2,y3) top,left1,
-		           DL.insert new inner)]]
+              concat [-- split vertically:
+                      do guard $ lg < bound && x2 > 1
+                         x1 <- [1..x2-1]
+                         [(DL.insert (0,0,x1,y2) $ DL.insert (x1,0,x2,y2) top,
+                           left,inner)],
+                      -- split horizontally:
+                      do guard $ lg < bound && y2 > 1
+                         y1 <- [1..y2-1]
+                         [(DL.insert (0,0,x2,y1) top,
+                           DL.insert (0,y1,x2,y2) left,inner)],
+                      -- join horizontally:
+                      do nonempty top
+                         let (x1,0,x3,y3):top1 = top
+                             new = (x1,y2,x3,y3)
+                         guard $ x1 == x2 && y3 > y2 && c new
+                         [(DL.insert (0,0,x3,y2) top1,left,
+                           DL.insert new inner)],
+                      -- join vertically:
+                      do nonempty left
+                         let (0,y1,x3,y3):left1 = left   
+                             new = (x2,y1,x3,y3)
+                         guard $ y1 == y2 && x3 > x2 && c new
+                         [(DL.insert (0,0,x2,y3) top,left1,
+                           DL.insert new inner)]]
               where lg = (sum $ map length [top,left,inner])+1
 
 dauto0 :: Dparams -> [Rects]
@@ -2077,125 +2077,125 @@ dauto0 (c,bound,c',tree,l,h) = if tree then dloop first else dloopG [] [first]
               where first :: Dstate
                     first = ([(0,0,l,h)],[],[])
                     out st = do guard $ all c topleft && c' dissect
-		                return dissect
-		             where (top,left,inner) = st
-	                           topleft = top++left
-	                           dissect = DL.sort $ topleft++inner
+                                return dissect
+                             where (top,left,inner) = st
+                                   topleft = top++left
+                                   dissect = DL.sort $ topleft++inner
                     dloop st = msum $ out st:map dloop sts
-	                       where sts = dsuccessors c bound st
-	            dloopG old (st:new) = msum [out st,dloopG old' new']
-	                                  where sts = dsuccessors c bound st
-	                  	                old' = st:old
-	                  	                new' = union new $ diff sts old'
+                               where sts = dsuccessors c bound st
+                    dloopG old (st:new) = msum [out st,dloopG old' new']
+                                          where sts = dsuccessors c bound st
+                                                old' = st:old
+                                                new' = union new $ diff sts old'
                     dloopG _ _          = mzero
 
 dauto :: Monad m => Dparams -> Branch Dstate m -> ListT m Rects
 dauto (c,bound,c',tree,l,h) branch = if tree then dloop first 
-				             else dloopG [] [first]
+                                             else dloopG [] [first]
               where first :: Dstate
                     first = ([(0,0,l,h)],[],[])
                     out st = do guard $ all c topleft && c' dissect
-		                return dissect
-		             where (top,left,inner) = st
-	                           topleft = top++left
-	                           dissect = DL.sort $ topleft++inner
+                                return dissect
+                             where (top,left,inner) = st
+                                   topleft = top++left
+                                   dissect = DL.sort $ topleft++inner
                     dloop st = msum [out st,
-		                     do lift $ branch st sts
-	                                msum $ map dloop sts]
-	                       where sts = dsuccessors c bound st
-	            dloopG old (st:new) = msum [out st,
-		                                do lift $ branch st sts
-	                                           dloopG old' new']
-	                                  where sts = dsuccessors c bound st
-	                  	                old' = st:old
-	                  	                new' = union new $ diff sts old'
+                                     do lift $ branch st sts
+                                        msum $ map dloop sts]
+                               where sts = dsuccessors c bound st
+                    dloopG old (st:new) = msum [out st,
+                                                do lift $ branch st sts
+                                                   dloopG old' new']
+                                          where sts = dsuccessors c bound st
+                                                old' = st:old
+                                                new' = union new $ diff sts old'
                     dloopG _ _          = mzero
 
 dheader :: String -> Int -> Int -> IO ()
 dheader file l h = writeFile file $ "axioms:\nstates == " ++ 
-				    show [([(0,0,l,h)],[]::Rects,[]::Rects)]
+                                    show [([(0,0,l,h)],[]::Rects,[]::Rects)]
 
 dissects0,dissects,dissectsS,dissectsIO,dissectsW :: Dparams -> IO Int
 
 dissects0 ps = do writeFile "disSols" $ showDiss 0 sols   -- 0..7 (see showDiss)
                   return $ length sols
-	       where solutions = dauto0 ps
-	             sols = union [] solutions
+               where solutions = dauto0 ps
+                     sols = union [] solutions
 
 dissects ps = do writeFile "disSols" $ showDiss 6 sols
                  return $ length sols
-	      where Id solutions = runLT $ dauto ps branch
-	            sols = union [] solutions
-	            branch :: Branch Dstate Id
-	            branch _ _ = Id ()
+              where Id solutions = runLT $ dauto ps branch
+                    sols = union [] solutions
+                    branch :: Branch Dstate Id
+                    branch _ _ = Id ()
 
 dissectsS ps = do writeFile "disSols" $ showDiss 1 $ toList $ DS.map toList sols
                   return $ DS.size sols
-	       where Id solutions = runLT $ dauto ps branch
-	             sols = fromList $ map fromList solutions
-	             branch :: Branch Dstate Id
-	             branch _ _ = Id ()
+               where Id solutions = runLT $ dauto ps branch
+                     sols = fromList $ map fromList solutions
+                     branch :: Branch Dstate Id
+                     branch _ _ = Id ()
 
 dissectsIO ps@(_,_,_,_,l,h) = do dheader "dissectsIO" l h
-		                 solutions <- runLT $ dauto ps branch
-		                 let sols = union [] solutions
-		                 writeFile "disSols" $ showDiss 1 sols
-		                 return $ length sols
-	     where branch :: Branch Dstate IO
-	           branch st sts = appendFile "dissectsIO" $ showTransR st sts
-	           
+                                 solutions <- runLT $ dauto ps branch
+                                 let sols = union [] solutions
+                                 writeFile "disSols" $ showDiss 1 sols
+                                 return $ length sols
+             where branch :: Branch Dstate IO
+                   branch st sts = appendFile "dissectsIO" $ showTransR st sts
+                   
 dissectsW ps@(_,_,_,_,l,h) = do dheader "dissectsW" l h
-		                appendFile "dissectsW" $ concatTrans transitions
-           	                writeFile "disSols" $ showDiss 1 sols
-           	                return $ length sols
+                                appendFile "dissectsW" $ concatTrans transitions
+                                writeFile "disSols" $ showDiss 1 sols
+                                return $ length sols
                 where (transitions,solutions) = runLT $ dauto ps branch
-	              sols = unionBag [] solutions
-	              branch :: Branch Dstate ((,) [Dtrans])
-	              branch st sts = ([(st,sts)],())
-	              -- tras1 = foldl insertBagR [] $ map f transitions -- slow
-	              -- f (x,s) = (g x,map g s)
-	              -- g (x,y,z) = x++y++z
- 	              -- tras2 = foldl insertBagR3 [] transitions        -- slow
+                      sols = unionBag [] solutions
+                      branch :: Branch Dstate ((,) [Dtrans])
+                      branch st sts = ([(st,sts)],())
+                      -- tras1 = foldl insertBagR [] $ map f transitions -- slow
+                      -- f (x,s) = (g x,map g s)
+                      -- g (x,y,z) = x++y++z
+                      -- tras2 = foldl insertBagR3 [] transitions        -- slow
 
 distest1 = dissects (const True,6,const True,True,2,3)          -- 34 solutions
-							        -- 0.02 secs
+                                                                -- 0.02 secs
 distest2 = dissects (const True,9,const True,True,3,3)          -- 322 solutions
-							        -- 0.02 secs
+                                                                -- 0.02 secs
 distest3 = dissects (area [1,2],9,const True,True,3,3)          -- 131 solutions
-							     	-- 0.13 secs
+                                                                -- 0.13 secs
 distest4 = dissects (area [1,2] &&& hori,9,const True,True,3,3) -- 27 solutions
-							        -- 0.03 secs
+                                                                -- 0.03 secs
 distest5 = dissects (const True,12,const True,True,4,3)        -- 3164 solutions
-							       -- 11.71 secs
+                                                               -- 11.71 secs
 distest6 = dissects (const True,16,const True,True,4,4)         -- ? solutions
-							        -- ? secs
+                                                                -- ? secs
 distest7 = dissects (area [2],8,const True,True,4,4)            -- 36 solutions
-							        -- 0.16 secs
+                                                                -- 0.16 secs
 distest8 = dissects (area [1,2] &&& hori,12,bricksh 4,True,5,4) -- 2 solutions
-							        -- 18.95 secs
+                                                                -- 18.95 secs
 distest9 = dissects (area [1,2] &&& vert,12,bricksv 4,True,4,5) -- 2 solutions
-							        -- 18.83 secs
-distest10 = dissects (prop 2,6,dsize 6,True,3,6)       	 	-- 14 solutions
-							     	-- 0.05 secs
-distest11 = dissects (prop 2,6,dsize 6,True,4,6)	        -- 67 solutions
-							     	-- 0.14 secs
-distest12 = dissects (area [4],6,dsize 6,True,6,4)       	-- 35 solutions
-	   					                -- 0.08 secs
-distest13 = dissects (area [4],6,dsize 6,False,6,4)     	-- 35 solutions
-	   					                -- 0.55 secs
+                                                                -- 18.83 secs
+distest10 = dissects (prop 2,6,dsize 6,True,3,6)                -- 14 solutions
+                                                                -- 0.05 secs
+distest11 = dissects (prop 2,6,dsize 6,True,4,6)                -- 67 solutions
+                                                                -- 0.14 secs
+distest12 = dissects (area [4],6,dsize 6,True,6,4)              -- 35 solutions
+                                                                -- 0.08 secs
+distest13 = dissects (area [4],6,dsize 6,False,6,4)             -- 35 solutions
+                                                                -- 0.55 secs
 distest14 = dissects (area [1,2] &&& hori,14,bricksh 4,True,6,4) -- 2 solutions
-							        -- 331.48 secs
-distest15 = dissects (prop 2,6,dsize 6,True,5,5)	        -- 0 solutions
-							    	-- 0.14 secs
-distest16 = dissects (prop 2,6,dsize 6,True,5,6)		-- 20 solutions
-						                -- 0.20 secs
-distest17 = dissects (prop 2,6,dsize 6,False,5,6)		-- 20 solutions
-						                -- 6.46 secs
-distest18 = dissects (prop 2,6,dsize 6,True,6,6)		-- 48 solutions
-						       		-- 0.37 secs
-distest19 = dissects (prop 2,6,dsize 6,False,6,6)		-- 48 solutions
-						       		-- 19.52 secs
-						       		
+                                                                -- 331.48 secs
+distest15 = dissects (prop 2,6,dsize 6,True,5,5)                -- 0 solutions
+                                                                -- 0.14 secs
+distest16 = dissects (prop 2,6,dsize 6,True,5,6)                -- 20 solutions
+                                                                -- 0.20 secs
+distest17 = dissects (prop 2,6,dsize 6,False,5,6)               -- 20 solutions
+                                                                -- 6.46 secs
+distest18 = dissects (prop 2,6,dsize 6,True,6,6)                -- 48 solutions
+                                                                -- 0.37 secs
+distest19 = dissects (prop 2,6,dsize 6,False,6,6)               -- 48 solutions
+                                                                -- 19.52 secs
+                                                                
 -- PYTHAGOREAN TRIPLES
 
 pyTriples = [(a,b,c) | c <- [2..], b <- [2..c-1], a <- [2..b-1], a*a+b*b == c*c]
@@ -2209,7 +2209,7 @@ pyt = take 222 pyTriples
 getIndex :: Eq a => [a] -> a -> Int
 getIndex s a = fromJust $ lookup a $ zip s [0..]
 
-codes1,codes1M :: [[(Char,Int)]]			  
+codes1,codes1M :: [[(Char,Int)]]                          
 codes1 = [zip code [0..] | code <- perms "sendmory01", check code]
 
 check code = -- m == 1 && s > 0 && 
@@ -2217,18 +2217,18 @@ check code = -- m == 1 && s > 0 &&
              where [s,e,n,d,m,o,r,y] = map (getIndex code) "sendmory"
              
 codes1M = do code <- perms "sendmory01"
-	     guard $ check code
-	     [zip code [0..]]
+             guard $ check code
+             [zip code [0..]]
               
 -- take 2 codes1 --> [[('o',0),('m',1),('y',2),('1',3),('0',4),('e',5),('n',6),
---		       ('d',7),('r',8),('s',9)],
---		      [('o',0),('m',1),('y',2),('0',3),('1',4),('e',5),('n',6),
---	               ('d',7),('r',8),('s',9)]]
+--                     ('d',7),('r',8),('s',9)],
+--                    [('o',0),('m',1),('y',2),('0',3),('1',4),('e',5),('n',6),
+--                     ('d',7),('r',8),('s',9)]]
 
-codes2 :: [[(Char,Int)]]			  
+codes2 :: [[(Char,Int)]]                          
 codes2 = do code <- perms "einsuzh012"
-	    guard $ check code
-	    [zip code [0..]]
+            guard $ check code
+            [zip code [0..]]
          where check code = 1000*(e+n)+100*(i+e)+10*(n+u)+s+n == 
                             1000*z+100*e+10*h+n
                            where [e,i,n,s,u,z,h] = map (getIndex code) "einsuzh"
@@ -2263,7 +2263,7 @@ eqHolds [o,r,n,y,e,d] = (e+o)*100+(n+r)*10+d+e == o*1000+n*100+e*10+y
 -- Zebrarätsel
 -- https://www.logisch-gedacht.de/logikraetsel/einsteinraetsel/loesung
 
- 1. The Englishman lives in the red house.					
+ 1. The Englishman lives in the red house.                                      
  2. The Spaniard owns the dog.
  3. Coffee is drunk in the green house.
  4. The Ukrainian drinks tea.
@@ -2294,18 +2294,18 @@ nextHouse  x xs y ys = rightHouse x xs y ys || rightHouse y ys x xs
 
 cond1  color nation = sameHouse   "Red      " color  "British  " nation 
 cond2  nation pet   = sameHouse   "Spaniard " nation "Dog      " pet 
-cond3  color drink  = sameHouse   "Green    " color  "Coffee   " drink 		
-cond4  nation drink = sameHouse   "Ukrainian" nation "Tea      " drink  		
-cond5  color        = rightHouse  "Green    " color  "White    " color 		
-cond6  smoke pet    = sameHouse   "Gold     " smoke  "Snails   " pet 		
-cond7  color smoke  = sameHouse   "Yellow   " color  "Kools    " smoke 		
-cond8  drink        = middleHouse "Milk     " drink 		
-cond9  nation       = firstHouse  "Norwegian" nation 		
-cond10 smoke pet    = nextHouse   "Chester  " smoke  "Fox      " pet	
-cond11 smoke pet    = nextHouse   "Kools    " smoke  "Horse    " pet	
-cond12 drink smoke  = sameHouse   "Juice    " drink  "Lucky    " smoke	
-cond13 nation smoke = sameHouse   "Japanese " nation "Dunhill  " smoke	
-cond14 color nation = nextHouse   "Blue     " color  "Norwegian" nation	
+cond3  color drink  = sameHouse   "Green    " color  "Coffee   " drink          
+cond4  nation drink = sameHouse   "Ukrainian" nation "Tea      " drink                  
+cond5  color        = rightHouse  "Green    " color  "White    " color          
+cond6  smoke pet    = sameHouse   "Gold     " smoke  "Snails   " pet            
+cond7  color smoke  = sameHouse   "Yellow   " color  "Kools    " smoke          
+cond8  drink        = middleHouse "Milk     " drink             
+cond9  nation       = firstHouse  "Norwegian" nation            
+cond10 smoke pet    = nextHouse   "Chester  " smoke  "Fox      " pet    
+cond11 smoke pet    = nextHouse   "Kools    " smoke  "Horse    " pet    
+cond12 drink smoke  = sameHouse   "Juice    " drink  "Lucky    " smoke  
+cond13 nation smoke = sameHouse   "Japanese " nation "Dunhill  " smoke  
+cond14 color nation = nextHouse   "Blue     " color  "Norwegian" nation 
 
 colors  = ["Red      ","Green    ","White    ","Yellow   ","Blue     "]
 nations = ["British  ","Spaniard ","Ukrainian","Japanese ","Norwegian"]
@@ -2319,14 +2319,14 @@ solution color nation drink smoke pet
           <== perm colors color /\ cond5 color /\ perm nations nation & ... -}
 
 solutions = [[color,nation,drink,smoke,pet] |
-	     color <- perms colors, 
-	     cond5 color, 
-	     nation <- perms nations, 
-	     cond1 color nation && cond9 nation && cond14 color nation,
-	     drink <- perms drinks, 
-	     cond3 color drink && cond8 drink && cond4 nation drink,
-	     smoke <- perms smokes, 
-	     cond7 color smoke && cond12 drink smoke && cond13 nation smoke,
+             color <- perms colors, 
+             cond5 color, 
+             nation <- perms nations, 
+             cond1 color nation && cond9 nation && cond14 color nation,
+             drink <- perms drinks, 
+             cond3 color drink && cond8 drink && cond4 nation drink,
+             smoke <- perms smokes, 
+             cond7 color smoke && cond12 drink smoke && cond13 nation smoke,
              pet <- perms pets, 
              cond2 nation pet && cond6 smoke pet && cond10 smoke pet && 
              cond11 smoke pet]
@@ -2335,7 +2335,7 @@ solutionsM = do color <- perms colors
                 guard $ cond5 color
                 nation <- perms nations
                 guard $ cond1 color nation && cond9 nation && 
-                	cond14 color nation
+                        cond14 color nation
                 drink <- perms drinks
                 guard $ cond3 color drink && cond8 drink && cond4 nation drink
                 smoke <- perms smokes
@@ -2343,17 +2343,17 @@ solutionsM = do color <- perms colors
                         cond13 nation smoke
                 pet <- perms pets
                 guard $ cond2 nation pet && cond6 smoke pet && 
-                	cond10 smoke pet && cond11 smoke pet 
+                        cond10 smoke pet && cond11 smoke pet 
                 return [color,nation,drink,smoke,pet]
 
 showMat houses =
         putStrLn $ "house  | 1         2         3         4         5    \n" ++
-      		   "color  | "++ unwords (houses!!0) ++ "\n" ++
-      		   "nation | "++ unwords (houses!!1) ++ "\n" ++
-      		   "drink  | "++ unwords (houses!!2) ++ "\n" ++
-      		   "smoke  | "++ unwords (houses!!3) ++ "\n" ++
-      		   "pet    | "++ unwords (houses!!4) 
-	                 
+                   "color  | "++ unwords (houses!!0) ++ "\n" ++
+                   "nation | "++ unwords (houses!!1) ++ "\n" ++
+                   "drink  | "++ unwords (houses!!2) ++ "\n" ++
+                   "smoke  | "++ unwords (houses!!3) ++ "\n" ++
+                   "pet    | "++ unwords (houses!!4) 
+                         
 printMats = mapM_ showMat solutions
 
 {-
@@ -2380,13 +2380,13 @@ showRel houses = filter (`notElem` "\" ") $ show $ concatMap f [0..4] where
       (pet,3,Snails),(pet,4,Dog),(pet,5,Zebra)]"] -}
       
 printSols = writeFile "zebrasol" $ filter (/= '\"') $ show 
-				 $ map showRel solutions 
+                                 $ map showRel solutions 
 
 -- discarded attempts
 
 zebraProd :: [[[Int]]]
 zebraProd = [[colors,nations,drinks,smokes,pets] | colors <- ps, nations <- ps, 
-			    	        drinks <- ps, smokes <- ps, pets <- ps]
+                                        drinks <- ps, smokes <- ps, pets <- ps]
             where ps = permutations [1..5]
 
 zebraSolsP :: [[Int]]
@@ -2394,7 +2394,7 @@ zebraSolsP = head $ filter zebraCond zebraProd
 
 fivePerms :: Eq a => [[a]] -> [[[a]]]
 fivePerms s = g s empty where 
-              g s s' = if s == empty then [s']		      
+              g s s' = if s == empty then [s']                
                        else do ks <- sequence s 
                                g (zipWith remove ks s) $ zipWith (:) ks s'
               empty = [[],[],[],[],[]]
@@ -2405,16 +2405,16 @@ zebraSolsF = head $ filter zebraCond $ fivePerms $ replicate 5 [1..5]
 zebraCond :: [[Int]] -> Bool
 zebraCond [colors,nations,drinks,smokes,pets] = all c [1..14]
     where c 1  = nations!!0 == 5 
-          c 2  = colors!!1 == 5 		 --  2 <==> 1/\3/\15
+          c 2  = colors!!1 == 5                  --  2 <==> 1/\3/\15
           c 3  = drinks!!2 == 3
           c 4  = any c [2,3,4]   where c i = colors!!i == 1 && nations!!i == 1
-      	  c 5  = any c [1..4]    where c i = nations!!i == 2 && pets!!i == 1
-      	  c 6  = any c [0,3,4]   where c i = colors!!i == 2 && drinks!!i == 1
-      	  c 7  = any c [1,3,4]   where c i = nations!!i == 3 && drinks!!i == 2
-      	  c 8  = any c [0..4]    where c i = smokes!!i == 1 && pets!!i == 2
-      	  c 9  = any c [0,2,3,4] where c i = colors!!i == 4 && smokes!!i == 3
-      	  c 10 = any c [0,1,3,4] where c i = drinks!!i == 4 && smokes!!i == 4
-      	  c 11 = any c [1..4]    where c i = nations!!i == 4 && smokes!!i == 5
+          c 5  = any c [1..4]    where c i = nations!!i == 2 && pets!!i == 1
+          c 6  = any c [0,3,4]   where c i = colors!!i == 2 && drinks!!i == 1
+          c 7  = any c [1,3,4]   where c i = nations!!i == 3 && drinks!!i == 2
+          c 8  = any c [0..4]    where c i = smokes!!i == 1 && pets!!i == 2
+          c 9  = any c [0,2,3,4] where c i = colors!!i == 4 && smokes!!i == 3
+          c 10 = any c [0,1,3,4] where c i = drinks!!i == 4 && smokes!!i == 4
+          c 11 = any c [1..4]    where c i = nations!!i == 4 && smokes!!i == 5
           c 12 = c 2 || c 3     where c i = colors!!i == 3 && colors!!(i+1) == 2
           c 13 = any (c 1) [0..3] || any (c (-1)) [1..4]
                                 where c k i = smokes!!i == 2 && pets!!(i+k) == 3
@@ -2422,29 +2422,29 @@ zebraCond [colors,nations,drinks,smokes,pets] = all c [1..14]
                                 where c k i = smokes!!i == 3 && pets!!(i+k) == 4
           c 15 = any (c 1) [0..3] || any (c (-1)) [1..4]
                                 where c k i = colors!!i == 5 && 
-                                	      nations!!(i+k) == 5
-                                	      
+                                              nations!!(i+k) == 5
+                                              
 zebraSolsI = head $ foldl (flip filter) (fivePerms $ replicate 5 [1..5])
-		  $ map c $ [1..4]++[7..14] -- ++[5,6]  	
+                  $ map c $ [1..4]++[7..14] -- ++[5,6]          
     where c 1  [_,nations,_,_,_]      = nations!!0 == 5
           c 2  [colors,_,d_,_,_]      = colors!!1 == 5    --  2 <==> 1/\3/\15
           c 3  [_,_,drinks,_,_]       = drinks!!2 == 3
-	  c 4  [colors,nations,_,_,_] = any c [2,3,4] 
+          c 4  [colors,nations,_,_,_] = any c [2,3,4] 
                where c i = colors!!i == 1 && nations!!i == 1
-	  c 5  [_,nations,_,_,pets]   = any c [1..4]
+          c 5  [_,nations,_,_,pets]   = any c [1..4]
                where c i = nations!!i == 2 && pets!!i == 1
-	  c 6  [colors,_,drinks,_,_]  = any c [0,3,4]
-      	       where c i = colors!!i == 2 && drinks!!i == 1
-	  c 7  [_,nations,drinks,_,_] = any c [1,3,4]
-      	       where c i = nations!!i == 3 && drinks!!i == 2
-      	  c 8  [_,_,_,smokes,pets]    = any c [0..4]
-      	       where c i = smokes!!i == 1 && pets!!i == 2
-      	  c 9  [colors,_,_,smokes,_]  = any c [0,2,3,4]
-      	       where c i = colors!!i == 4 && smokes!!i == 3
-      	  c 10 [_,_,drinks,smokes,_]  = any c [0,1,3,4]
-      	       where c i = drinks!!i == 4 && smokes!!i == 4
-      	  c 11 [_,nations,_,smokes,_] = any c [1..4]
-     	       where c i = nations!!i == 4 && smokes!!i == 5
+          c 6  [colors,_,drinks,_,_]  = any c [0,3,4]
+               where c i = colors!!i == 2 && drinks!!i == 1
+          c 7  [_,nations,drinks,_,_] = any c [1,3,4]
+               where c i = nations!!i == 3 && drinks!!i == 2
+          c 8  [_,_,_,smokes,pets]    = any c [0..4]
+               where c i = smokes!!i == 1 && pets!!i == 2
+          c 9  [colors,_,_,smokes,_]  = any c [0,2,3,4]
+               where c i = colors!!i == 4 && smokes!!i == 3
+          c 10 [_,_,drinks,smokes,_]  = any c [0,1,3,4]
+               where c i = drinks!!i == 4 && smokes!!i == 4
+          c 11 [_,nations,_,smokes,_] = any c [1..4]
+               where c i = nations!!i == 4 && smokes!!i == 5
           c 12 [colors,_,_,_,_]       = c 2 || c 3 
                where c i = colors!!i == 3 && colors!!(i+1) == 2
           c 13 [_,_,_,smokes,pets]    = any (c 1) [0..3] || any (c (-1)) [1..4]
@@ -2461,22 +2461,22 @@ zebraSolsD = head $ filter zebraCondD $ fivePerms $ replicate 5 [One ..Five]
              
 zebraCondD :: [[FF]] -> Bool
 zebraCondD [colors,nations,drinks,smokes,pets] = c1_1 && c1_2 && c1_3 &&
-	   any c2 [2,3,4] && any c3 [1..4] && any c4 [0,3,4] && 
+           any c2 [2,3,4] && any c3 [1..4] && any c4 [0,3,4] && 
            any c5 [1,3,4] && any c6 [0..4] && any c7 [0,2,3,4] && 
            any c8 [0,1,3,4] && any c9 [1..4] && any c10 [2,3] && 
            (any (c11 1) [0..3] || any (c11 (-1)) [1..4]) &&
            (any (c12 1) [0..3] || any (c12 (-1)) [1..4]) 
      where c1_1 = nations!!0 == Five 
-           c1_2 = colors!!1 == Five 		-- follows from c13
+           c1_2 = colors!!1 == Five             -- follows from c13
            c1_3 = drinks!!2 == Three
            c2 i = colors!!i == One && nations!!i == One
-      	   c3 i = nations!!i == Two && pets!!i == One
-      	   c4 i = colors!!i == Two && drinks!!i == One
-      	   c5 i = nations!!i == Three && drinks!!i == Two
-      	   c6 i = smokes!!i == One && pets!!i == Two
-      	   c7 i = colors!!i == Four && smokes!!i == Three
-      	   c8 i = drinks!!i == Four && smokes!!i == Four
-     	   c9 i = nations!!i == Four && smokes!!i == Five
+           c3 i = nations!!i == Two && pets!!i == One
+           c4 i = colors!!i == Two && drinks!!i == One
+           c5 i = nations!!i == Three && drinks!!i == Two
+           c6 i = smokes!!i == One && pets!!i == Two
+           c7 i = colors!!i == Four && smokes!!i == Three
+           c8 i = drinks!!i == Four && smokes!!i == Four
+           c9 i = nations!!i == Four && smokes!!i == Five
            c10 i = colors!!i == Three && colors!!(i+1) == Two
            c11 k i = smokes!!i == Two && pets!!(i+k) == Three
            c12 k i = smokes!!i == Three && pets!!(i+k) == Four
@@ -2494,8 +2494,8 @@ sudoku a values = all sat values &&
                   columns = map col [1..9] where col j = [(i,j) | i <- [1..9]]
                   squares = map square [(i,j) | i <- [2,5,8], j <- [2,5,8]]
                             where square (i,j) = [(i+k,j+m) | k <- [-1,0,1], 
-                            				      m <- [-1,0,1]]
-		  isPerm s = and $ map (== 1) $ map (card s) [1..9]
+                                                              m <- [-1,0,1]]
+                  isPerm s = and $ map (== 1) $ map (card s) [1..9]
 
 -- CYCLES
 
@@ -2505,8 +2505,8 @@ sudoku a values = all sat values &&
 cycles :: Ord a => [a] -> ([a],[(a,a)])
 cycles (x:s) = insert x s' cs
              where (s',cs) = cycles s
-	           insert x s@(y:xs) cs = if x <= y then (x:s,cs) else (y:ys,ds)
-			      where (ys,ds) = insert x xs ((min x y,max x y):cs)
+                   insert x s@(y:xs) cs = if x <= y then (x:s,cs) else (y:ys,ds)
+                              where (ys,ds) = insert x xs ((min x y,max x y):cs)
                    insert x _ cs        = ([x],cs)
 cycles s = (s,[])
 
@@ -2527,22 +2527,22 @@ cycleDiff s1 s2 = snd (cycles s2) -+- reverse (snd (cycles s1))
 
 acyclic xs ts = case f xs [] [] of Just _ -> True; _ -> False
          where f (x:xs) path zs = do guard $ x `notElem` path
-	                             if x `elem` zs then f xs path zs
-				        else do zs <- f [z | (y,z) <- r, x == y]
-					                (x:path) (x:zs) 
-				                f xs path zs
+                                     if x `elem` zs then f xs path zs
+                                        else do zs <- f [z | (y,z) <- r, x == y]
+                                                        (x:path) (x:zs) 
+                                                f xs path zs
                f _ _ zs         = Just zs
-	       r = [(xs!!i,x) | i <- indices ts, x <- vars $ ts!!i]
+               r = [(xs!!i,x) | i <- indices ts, x <- vars $ ts!!i]
 
 -- cycles' r x returns all elements that are r-reachable from x and belong to a 
 -- cycle. 
 
-cycles' r x = f [] [] x	where					     
+cycles' r x = f [] [] x where                                        
               f path zs x | x `elem` path = path
- 	                  | x `elem` zs   = []
-	                  | True          = unionMap (f (x:path) (x:zs)) 
-		                                     [z | (y,z) <- r, x == y]
-	  	  
+                          | x `elem` zs   = []
+                          | True          = unionMap (f (x:path) (x:zs)) 
+                                                     [z | (y,z) <- r, x == y]
+                  
 -- REDUCTIONS 
 
 type Rules a = Tree a -> Maybe (Tree a)
@@ -2553,16 +2553,16 @@ reduction rules1 rules2 t = init red ++ iteration (redStep rules2) (last red)
 
 iteration :: Eq a => (a -> Maybe a) -> a -> [a]
 iteration f a = case f a of Just a' | a /= a' -> a:iteration f a'
-		            _ -> [a]
+                            _ -> [a]
 
 redStep :: Rules a -> Tree a -> Maybe (Tree a)
 redStep rules = f where f t = msum [rules t,
-				    do F a ts <- Just t
-				       ts <- g ts; Just $ F a ts]
-	                g ts = do t:ts <- Just ts
-		                  case f t of Just t -> Just $ t:ts
-		 		              _ -> do ts <- g ts; Just $ t:ts
-		                                        
+                                    do F a ts <- Just t
+                                       ts <- g ts; Just $ F a ts]
+                        g ts = do t:ts <- Just ts
+                                  case f t of Just t -> Just $ t:ts
+                                              _ -> do ts <- g ts; Just $ t:ts
+                                                        
 -- GRAPHS
 
 type Graph2 = ([(Pos,Pos)],Int,Int,Pos -> Int)
@@ -2618,15 +2618,15 @@ s = [([],[]),([],[0]),([],[1]),([],[2]),([],[3]),([],[0,2]),([],[1,3]),
 
 pathR :: Int -> String -> Int -> Point -> IO ()
 pathR mode file n p = case rec (n*n) [p] of 
-		           Just ps -> do writeFile file $ show [ps]
-			   		 drawTrack True file mode
-		           _ -> putStrLn "Nothing"
+                           Just ps -> do writeFile file $ show [ps]
+                                         drawTrack True file mode
+                           _ -> putStrLn "Nothing"
                   where rec :: Int -> Path -> Maybe Path
-	    	        rec 1 ps       = Just $ reverse ps
-		        rec k ps@(p:_) = try (k-1) [q:ps | q <- nextPoss n ps p]
-			try :: Int -> [Path] -> Maybe Path
-			try k pss = do ps:pss <- Just pss
-		   		       rec k ps `mplus` try k pss
+                        rec 1 ps       = Just $ reverse ps
+                        rec k ps@(p:_) = try (k-1) [q:ps | q <- nextPoss n ps p]
+                        try :: Int -> [Path] -> Maybe Path
+                        try k pss = do ps:pss <- Just pss
+                                       rec k ps `mplus` try k pss
 
 realPos (x,y) = (y*50,x*50)
 
@@ -2649,18 +2649,18 @@ colorBack w color = do (x,y) <- getWindowSize w
 drawGraph :: Graph -> IO ()
 drawGraph (edges,m,n,label) = runGraphics $
                               do w <- openWindow "graph" size
-			         colorBack w White
-				 mapM (drawLn w) edges
+                                 colorBack w White
+                                 mapM (drawLn w) edges
                                  mapM (drawPt w) (zip nodes (map label nodes)) 
-			         getRBP w
-	                         closeWindow w
-			      where size = (n*50+50,m*50+50)
-			            nodes = [(x,y) | x <- [1..m], y <- [1..n]]
+                                 getRBP w
+                                 closeWindow w
+                              where size = (n*50+50,m*50+50)
+                                    nodes = [(x,y) | x <- [1..m], y <- [1..n]]
 
 drawLNodes :: Bool -> RGB -> Path -> [String] -> String
 drawLNodes moreCols col ps = concat . f ps
-	        where f = if moreCols then zipWith2 (drawLNode . g) [indices lg]
-		       		      else zipWith $ drawLNode $ mkLight col
-		      g = mkLight . hue lg col; lg = length ps
+                where f = if moreCols then zipWith2 (drawLNode . g) [indices lg]
+                                      else zipWith $ drawLNode $ mkLight col
+                      g = mkLight . hue lg col; lg = length ps
 -}
 
