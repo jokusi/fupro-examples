@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE LambdaCase, TypeSynonymInstances #-}
 
 module Coalg where
@@ -55,11 +56,13 @@ class Monoid a where mempty :: a
                      mappend :: a -> a -> a
                      
 mconcat :: Monoid a => [a] -> a
-mconcat = foldr mappend mempty
+mconcat = foldr mappend mempty -}
 
+#if !MIN_VERSION_base(4,9,0)
 instance Monoid state => Monad ((,) state) where       -- ggf. auszukommentieren        
          return a = (mempty,a)                          
-         (st,a) >>= f = (st `mappend` st',b) where (st',b) = f a  -}
+         (st,a) >>= f = (st `mappend` st',b) where (st',b) = f a
+#endif
 
 -- state monads
          
