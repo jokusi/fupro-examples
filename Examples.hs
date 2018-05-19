@@ -5,7 +5,12 @@
     
 -- 13.10.2017
 
-module Examples where
+module Examples
+  ( module Examples
+  , module Painter
+  , module Coalg
+  , module Expr
+  ) where
 
 import Data.Array(Ix,Array,array,(!),bounds,index,range,listArray)
 import Data.Maybe
