@@ -3,23 +3,23 @@ import Painter
 
 -- Implementierung von Lindenmayer-Systemen: Elemente der Menge Lindenmayer
 -- der Form (d,a,s,rs) beinhalten die Angabe d zur Distanz, um die sich die
--- Schildkršte vorwŠrts bewegt, den Winkel a, um den sie sich fŸr die 
+-- Schildkrï¿½te vorwï¿½rts bewegt, den Winkel a, um den sie sich fï¿½r die 
 -- Symbole '+' und '-' dreht (in Grad), den Startstring s und die 
 -- Ersetzungsregeln rs. Letztere haben die gleiche Form wie die Regeln von 
 -- kontextfreien Grammatiken und werden hier als 2-Tupel gespeichert.
 --
 -- Die Funktion Lindenmayer hat als Parameter neben dem Lindenmayer-System
 -- den Modus, mit dem gezeichnet wird, und die Zahl n der Iterationen von 
--- Ersetzungen, die durchgefŸhrt werden sollen.
+-- Ersetzungen, die durchgefï¿½hrt werden sollen.
 --
--- iterate ist die Hilfsfunktion, die die Iterationen durchfŸhrt,
--- applyRules fŸhrt die Ersetzungen durch und moveL Ÿbersetzt schlie§lich 
--- den String Ÿber den Zeichen {A,B,F,J,+,-,[,]} in Turtle-Aktionen.
+-- iterate ist die Hilfsfunktion, die die Iterationen durchfï¿½hrt,
+-- applyRules fï¿½hrt die Ersetzungen durch und moveL ï¿½bersetzt schlieï¿½lich 
+-- den String ï¿½ber den Zeichen {A,B,F,J,+,-,[,]} in Turtle-Aktionen.
 --
--- 'A','B' und 'F' werden in der Regel fŸr VorwŠrtsbewegung benutzt '+','-' 
--- fŸr Drehung, '[' fŸr das Schreiben auf den Keller der Schildkršte, ']' 
--- fŸr das Lesen vom Keller. Hier steht au§erdem 'J' fŸr das 
--- VorwŠrtsspringen.
+-- 'A','B' und 'F' werden in der Regel fï¿½r Vorwï¿½rtsbewegung benutzt '+','-' 
+-- fï¿½r Drehung, '[' fï¿½r das Schreiben auf den Keller der Schildkrï¿½te, ']' 
+-- fï¿½r das Lesen vom Keller. Hier steht auï¿½erdem 'J' fï¿½r das 
+-- Vorwï¿½rtsspringen.
 
 type Lindenmayer = (Float, Float, String, [(Char,String)])
 
@@ -50,5 +50,5 @@ curve draw = draw 30 (22,25,"X",[('X',"F-X"),('X',"F+X")])
 tree' draw = draw 5 (3,10,"FFX",[('X',"[+++[FX]+FFX][FFFX][--FX]"),('F',"FF"),
 		                 ('X',"[---[FX]-FFX][FFFX][++FX]")])
 
-draw1 depth = drawC1 . hueCol 1 . lindenmayer 14111 depth
-draw2 depth = drawC1 . lindenmayer 12111 depth
+draw1 depth = drawC . hueCol 1 . lindenmayer 14111 depth
+draw2 depth = drawC . lindenmayer 12111 depth

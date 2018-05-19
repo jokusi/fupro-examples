@@ -5,7 +5,7 @@ module Tableau where
 import Control.Monad
 import Data.Maybe
 import Painter(Parser,Tree(F,V),root,subtrees,parse,token,tstring,tchar,many,
-	       char,sat,nat,parse,newlines,fold2,drawTermsP)
+	       char,sat,nat,parse,newlines,fold2)
 
 {- GRAMMAR
 Modal      ::= OrExpr | OrExpr "==>" OrExpr
@@ -105,13 +105,13 @@ contra = TN 0 (F "false" []) False
 iniTab :: Tree String -> Tableau
 iniTab phi = V $ TN 1 phi False
 
-reduceTab :: String -> String -> IO ()
-reduceTab file formula = do writeFile redfile $ newlines $ map f 
-					      $ iteration (iniTab phi) 2 []
-                            drawTermsP redfile
-                         where f (t,next,p) = show (t,p)  
-			       Just phi = parse modalParser formula
-			       redfile = file ++ "Reduction"  
+-- reduceTab :: String -> String -> IO ()
+-- reduceTab file formula = do writeFile redfile $ newlines $ map f 
+-- 					      $ iteration (iniTab phi) 2 []
+--                             drawTermsP redfile
+--                          where f (t,next,p) = show (t,p)  
+-- 			       Just phi = parse modalParser formula
+-- 			       redfile = file ++ "Reduction"  
 			       
 iteration :: Tableau -> Int -> [Int] -> [(Tableau,Int,[Int])]
 iteration t n p = case redStepP t n of Just (u,k,q) | (t,n) /= (u,k) 
@@ -236,16 +236,16 @@ enclose t = if isV t || root t `elem` words "! <> []"
 
 -- EXAMPLES
 
-test1 = reduceTab "test1" 					     -- hor = 11
-		  "(x and y or z) and x1 or y1 or z1 or !x2"         -- ver = 44
-test2 = reduceTab "test2" 
-		  "!x and (y or x) and (y ==> x) or x and (!x and y or !y)" 
+-- test1 = reduceTab "test1" 					     -- hor = 11
+		  -- "(x and y or z) and x1 or y1 or z1 or !x2"         -- ver = 44
+-- test2 = reduceTab "test2" 
+		  -- "!x and (y or x) and (y ==> x) or x and (!x and y or !y)" 
                   -- LogikSchwentick 6/4
-test3 = reduceTab "test3" "<><>x and [](x ==> []!x)"
+-- test3 = reduceTab "test3" "<><>x and [](x ==> []!x)"
                   -- LogikSchwentick 6/14
-test4 = reduceTab "test4" "<>x and []!y and <>(x ==> y)"
+-- test4 = reduceTab "test4" "<>x and []!y and <>(x ==> y)"
                   -- LogikSchwentick 6/15
-test5 = reduceTab "test5" "[](x ==> y) and <>x and []!y"
+-- test5 = reduceTab "test5" "[](x ==> y) and <>x and []!y"
                   -- LogikSchwentick 6/17
-test6 = reduceTab "test6" "!([](x ==> y) and <>x and []!y)"
+-- test6 = reduceTab "test6" "!([](x ==> y) and <>x and []!y)"
 
