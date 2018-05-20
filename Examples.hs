@@ -10,6 +10,10 @@ module Examples
   , module Painter
   , module Coalg
   , module Expr
+  , module Data.Array
+  , module Data.Maybe
+  , module Data.IORef
+  , module Control.Monad
   ) where
 
 import Data.Array(Ix,Array,array,(!),bounds,index,range,listArray)
