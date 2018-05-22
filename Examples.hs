@@ -5,16 +5,7 @@
     
 -- 13.10.2017
 
-module Examples
-  ( module Examples
-  , module Painter
-  , module Coalg
-  , module Expr
-  , module Data.Array
-  , module Data.Maybe
-  , module Data.IORef
-  , module Control.Monad
-  ) where
+module Examples where
 
 import Data.Array(Ix,Array,array,(!),bounds,index,range,listArray)
 import Data.Maybe
