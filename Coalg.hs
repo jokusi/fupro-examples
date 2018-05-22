@@ -1,7 +1,17 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE LambdaCase, TypeSynonymInstances #-}
 
-module Coalg where
+module Coalg
+  ( Bintree(Empty,Fork)
+  , Id(Id)
+  , StateT(StateT)
+  , runST
+  , getSubtree
+  , TreeSig(TreeSig, var_,fun)
+  , foldTree
+  , State(State)
+  , runS
+  ) where
 
 -- 25.3.2018
 

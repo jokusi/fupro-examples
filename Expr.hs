@@ -1,6 +1,11 @@
 {-# LANGUAGE LambdaCase, TypeFamilies #-}
 
-module Expr where
+module Expr
+  ( Compiler
+  , some
+  , many
+  , ListT(runLT)
+  ) where
 
 -- 27.3.2018
 
